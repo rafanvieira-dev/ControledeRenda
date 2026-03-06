@@ -69,7 +69,7 @@ function renderizarLista(categoria, idLista) {
     });
 }
 
-// NOVA LÓGICA DE CARTÕES (Agrupando por Fatura)
+// LÓGICA DE CARTÕES (Agrupando por Fatura)
 function renderizarCartoes() {
     const conteinerCartoes = document.getElementById('lista-cartoes');
     conteinerCartoes.innerHTML = '';
@@ -195,7 +195,7 @@ if(formFixas) formFixas.addEventListener('submit', (e) => {
     formFixas.reset(); salvarDados();
 });
 
-// Formulário de Cartões
+// Formulário de Cartões ATUALIZADO
 const formCartoes = document.getElementById('form-cartoes');
 if(formCartoes) {
     const selectQtd = document.getElementById('qtd');
@@ -204,18 +204,17 @@ if(formCartoes) {
     formCartoes.addEventListener('submit', (e) => {
         e.preventDefault();
         
-        let valorTotal = parseFloat(document.getElementById('valor-total').value);
+        let valorParcela = parseFloat(document.getElementById('valor-parcela').value);
         let qtd = parseInt(document.getElementById('qtd').value);
-        let valorParcela = valorTotal / qtd; // Calcula o valor da parcela automaticamente
+        let valorTotal = valorParcela * qtd; // Calcula o valor total automaticamente
 
-        // Se for uma versão antiga dos dados, isso garante que não quebre
         bancoDeDados.cartoes.push({
             cartao: document.getElementById('cartao-nome').value.trim(),
             descricao: document.getElementById('desc').value,
             valorTotal: valorTotal,
             valorParcela: valorParcela,
             qtdParcelas: qtd,
-            parcelasPagas: 0, // Começa com zero parcelas pagas
+            parcelasPagas: 0, 
             dataCompra: document.getElementById('data-compra').value
         });
         formCartoes.reset(); salvarDados();

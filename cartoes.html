@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartões - Finanças</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Minhas Finanças</h1>
+        <nav class="menu">
+            <a href="index.html">Saldo</a>
+            <a href="renda.html">Renda</a>
+            <a href="fixas.html">Fixas</a>
+            <a href="cartoes.html" class="ativo">Cartões</a>
+            <a href="emprestimos.html">Empréstimos</a>
+        </nav>
+
+        <h2>Cartões de Crédito</h2>
+        <form id="form-cartoes">
+            <input type="text" id="cartao-nome" placeholder="Cartão (Ex: Nubank)" required>
+            <input type="text" id="desc" placeholder="Descrição da Compra" required>
+            <input type="number" id="valor" placeholder="Valor da Parcela" step="0.01" required>
+            <input type="number" id="qtd" placeholder="Total de Parcelas" required>
+            <button type="submit">Adicionar Compra</button>
+        </form>
+        <ul id="lista-cartoes"></ul>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -22,8 +22,18 @@
         
         <form id="form-emprestimos">
             <input type="text" id="desc" placeholder="Ex: Financiamento do Carro" required>
-            <input type="number" id="valor" placeholder="Valor da Parcela (R$)" step="0.01" required>
-            <input type="number" id="qtd" placeholder="Total de Parcelas Restantes" required>
+            <input type="number" id="valor-total" placeholder="Valor Total do Empréstimo (R$)" step="0.01" required>
+            <input type="number" id="valor-parcela" placeholder="Valor da Parcela (R$)" step="0.01" required>
+            
+            <label for="qtd-total">Total de Parcelas do Empréstimo:</label>
+            <select id="qtd-total" required></select>
+
+            <label for="qtd-pagas">Quantas já foram pagas?</label>
+            <select id="qtd-pagas" required></select>
+
+            <label for="data-inicio">Mês da 1ª Parcela:</label>
+            <input type="date" id="data-inicio" required>
+
             <button type="submit">Adicionar Empréstimo</button>
         </form>
 

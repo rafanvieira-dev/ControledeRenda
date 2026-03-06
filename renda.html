@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renda - Finanças</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Minhas Finanças</h1>
+        <nav class="menu">
+            <a href="index.html">Saldo</a>
+            <a href="renda.html" class="ativo">Renda</a>
+            <a href="fixas.html">Fixas</a>
+            <a href="cartoes.html">Cartões</a>
+            <a href="emprestimos.html">Empréstimos</a>
+        </nav>
+
+        <h2>Entradas e Proventos</h2>
+        <form id="form-renda">
+            <input type="text" id="desc" placeholder="Ex: Salário" required>
+            <input type="number" id="valor" placeholder="Valor (R$)" step="0.01" required>
+            <button type="submit">Adicionar Renda</button>
+        </form>
+        <ul id="lista-renda"></ul>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

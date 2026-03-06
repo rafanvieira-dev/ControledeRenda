@@ -1,25 +1,29 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>O Arquivista</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saldo - Finanças</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container">
+        <h1>Minhas Finanças</h1>
+        <nav class="menu">
+            <a href="index.html" class="ativo">Saldo</a>
+            <a href="renda.html">Renda</a>
+            <a href="fixas.html">Fixas</a>
+            <a href="cartoes.html">Cartões</a>
+            <a href="emprestimos.html">Empréstimos</a>
+        </nav>
 
-<div class="game">
-  <!-- TELA INICIAL -->
-  <div id="startScreen" class="start">
-      <h1 class="title">O Arquivista</h1>
-      <p class="startText">Iniciar</p> <!-- Apenas o nome do jogo e iniciar -->
-  </div>
-
-  <!-- JOGO -->
-  <canvas id="gameCanvas" width="320" height="480"></canvas>
-
-</div>
-
-<script src="game.js"></script>
+        <h2>Resumo do Mês</h2>
+        <div class="painel">
+            <div class="card receitas">Renda<br>R$ <span id="resumo-receitas">0.00</span></div>
+            <div class="card despesas">Gastos<br>R$ <span id="resumo-despesas">0.00</span></div>
+            <div class="card saldo">Saldo<br>R$ <span id="resumo-saldo">0.00</span></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 <body>
     <div class="container">
         <h1>Minhas Finanças</h1>
+        
         <nav class="menu">
             <a href="index.html">Saldo</a>
             <a href="renda.html">Renda</a>
@@ -17,16 +18,26 @@
             <a href="emprestimos.html">Empréstimos</a>
         </nav>
 
-        <h2>Cartões de Crédito</h2>
+        <h2>Faturas e Compras no Cartão</h2>
+        
         <form id="form-cartoes">
-            <input type="text" id="cartao-nome" placeholder="Cartão (Ex: Nubank)" required>
-            <input type="text" id="desc" placeholder="Descrição da Compra" required>
-            <input type="number" id="valor" placeholder="Valor da Parcela" step="0.01" required>
-            <input type="number" id="qtd" placeholder="Total de Parcelas" required>
-            <button type="submit">Adicionar Compra</button>
+            <input type="text" id="cartao-nome" placeholder="Nome do Cartão (Ex: Nubank, Itaú)" required>
+            <input type="text" id="desc" placeholder="O que você comprou?" required>
+            
+            <input type="number" id="valor-total" placeholder="Valor Total da Compra (R$)" step="0.01" required>
+            
+            <label for="qtd">Em quantas vezes dividiu?</label>
+            <select id="qtd" required></select>
+
+            <label for="data-compra">Data da Compra:</label>
+            <input type="date" id="data-compra" required>
+
+            <button type="submit">Adicionar Compra ao Cartão</button>
         </form>
-        <ul id="lista-cartoes"></ul>
+
+        <div id="lista-cartoes"></div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

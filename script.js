@@ -24,7 +24,7 @@ function formatarData(dataString) {
     if(!dataString) return "N/A";
     let partes = dataString.split('-');
     if(partes.length !== 3) return dataString;
-    return `${partes[2]}/${partes[1]}/${partes[0]}`; // Formata para DD/MM/AAAA
+    return `${partes[2]}/${partes[1]}/${partes[0]}`; 
 }
 
 function calcularDataFim(dataInicio, qtdTotal) {
@@ -39,17 +39,25 @@ function calcularDataFim(dataInicio, qtdTotal) {
 // --- FUNÇÕES DE RENDERIZAÇÃO ---
 
 function renderizarResumo() {
+    let hoje = new Date().getDate(); // Pega o dia atual (1 a 31)
+
     let totalRenda = bancoDeDados.renda.reduce((acc, item) => acc + item.valor, 0);
     let totalFixas = bancoDeDados.fixas.reduce((acc, item) => acc + item.valor, 0);
     
-    // Soma apenas se a compra do cartão não estiver quitada
     let totalCartoes = bancoDeDados.cartoes.reduce((acc, item) => {
         return (item.parcelasPagas < item.qtdParcelas) ? acc + item.valorParcela : acc;
     }, 0);
     
-    // Soma apenas se o empréstimo não estiver quitado
+    // NOVA REGRA DOS EMPRÉSTIMOS: Só desconta se já passou do dia de vencimento
     let totalEmprestimos = bancoDeDados.emprestimos.reduce((acc, item) => {
-        return (item.qtdPagas < item.qtdTotal) ? acc + item.valorParcela : acc;
+        let diaVenc = item.diaVencimento || 1; // Se for um dado antigo sem dia, assume dia 1
+        
+        // Se ainda não foi quitado E o dia de hoje é igual ou maior ao vencimento -> Desconta!
+        if (item.qtdPagas < item.qtdTotal && hoje >= diaVenc) {
+            return acc + item.valorParcela;
+        }
+        // Se não, não desconta nada ainda (retorna o acumulado atual)
+        return acc;
     }, 0);
     
     let totalDespesas = totalFixas + totalCartoes + totalEmprestimos;
@@ -69,31 +77,26 @@ function renderizarLista(categoria, idLista) {
     });
 }
 
-// LÓGICA DE CARTÕES (Agrupando por Fatura)
 function renderizarCartoes() {
     const conteinerCartoes = document.getElementById('lista-cartoes');
     conteinerCartoes.innerHTML = '';
 
     let cartoesAgrupados = {};
 
-    // Agrupa as compras pelo nome do cartão
     bancoDeDados.cartoes.forEach((compra, index) => {
-        let nomeUpper = compra.cartao.toUpperCase(); // Padroniza o nome
+        let nomeUpper = compra.cartao.toUpperCase(); 
         
         if(!cartoesAgrupados[nomeUpper]) {
             cartoesAgrupados[nomeUpper] = { totalFatura: 0, compras: [] };
         }
         
-        // Se a compra ainda não foi quitada, soma na fatura do mês
         if (compra.parcelasPagas < compra.qtdParcelas) {
             cartoesAgrupados[nomeUpper].totalFatura += compra.valorParcela;
         }
         
-        // Guarda a compra e o index original dela para podermos deletar/dar baixa
         cartoesAgrupados[nomeUpper].compras.push({...compra, indexOriginal: index});
     });
 
-    // Desenha as faturas na tela
     for (let nomeCartao in cartoesAgrupados) {
         let dadosCartao = cartoesAgrupados[nomeCartao];
 
@@ -134,13 +137,14 @@ function renderizarEmprestimos() {
     bancoDeDados.emprestimos.forEach((item, index) => {
         let finalizado = item.qtdPagas >= item.qtdTotal;
         let dataFim = calcularDataFim(item.dataInicio, item.qtdTotal);
+        let textoDiaVenc = item.diaVencimento ? ` | Vence dia: <strong>${item.diaVencimento}</strong>` : '';
         
         lista.innerHTML += `
             <li style="${finalizado ? 'opacity: 0.6; border-left-color: #28a745;' : ''}">
                 <div>
                     <strong>${item.descricao}</strong> (Total: R$ ${item.valorTotal.toFixed(2)})<br>
                     <small>Progresso: ${item.qtdPagas}/${item.qtdTotal} pagas | Parcela: R$ ${item.valorParcela.toFixed(2)}</small><br>
-                    <small style="color: #666;">Termina em: <strong>${dataFim}</strong></small>
+                    <small style="color: #666;">Termina em: <strong>${dataFim}</strong>${textoDiaVenc}</small>
                 </div>
                 <div class="botoes-acao">
                     ${!finalizado ? `<button class="btn-baixa" onclick="darBaixaEmprestimo(${index})">Pagar 1x</button>` : `<span style="color:#28a745; font-weight:bold; margin-right: 10px;">Quitado!</span>`}
@@ -195,7 +199,6 @@ if(formFixas) formFixas.addEventListener('submit', (e) => {
     formFixas.reset(); salvarDados();
 });
 
-// Formulário de Cartões ATUALIZADO
 const formCartoes = document.getElementById('form-cartoes');
 if(formCartoes) {
     const selectQtd = document.getElementById('qtd');
@@ -206,7 +209,7 @@ if(formCartoes) {
         
         let valorParcela = parseFloat(document.getElementById('valor-parcela').value);
         let qtd = parseInt(document.getElementById('qtd').value);
-        let valorTotal = valorParcela * qtd; // Calcula o valor total automaticamente
+        let valorTotal = valorParcela * qtd; 
 
         bancoDeDados.cartoes.push({
             cartao: document.getElementById('cartao-nome').value.trim(),
@@ -221,7 +224,6 @@ if(formCartoes) {
     });
 }
 
-// Formulário de Empréstimos
 const formEmprestimos = document.getElementById('form-emprestimos');
 if(formEmprestimos) {
     const selectTotal = document.getElementById('qtd-total');
@@ -235,9 +237,15 @@ if(formEmprestimos) {
         
         let total = parseInt(document.getElementById('qtd-total').value);
         let pagas = parseInt(document.getElementById('qtd-pagas').value);
+        let diaVenc = parseInt(document.getElementById('dia-vencimento').value); // Lê o novo campo
         
         if (pagas > total) {
             alert("Erro: O número de parcelas pagas não pode ser maior que o total.");
+            return;
+        }
+        
+        if (diaVenc < 1 || diaVenc > 31) {
+            alert("Erro: O dia de vencimento deve ser entre 1 e 31.");
             return;
         }
 
@@ -247,7 +255,8 @@ if(formEmprestimos) {
             valorParcela: parseFloat(document.getElementById('valor-parcela').value), 
             qtdTotal: total,
             qtdPagas: pagas,
-            dataInicio: document.getElementById('data-inicio').value
+            dataInicio: document.getElementById('data-inicio').value,
+            diaVencimento: diaVenc // Salva o dia no banco de dados
         });
         formEmprestimos.reset(); salvarDados();
     });

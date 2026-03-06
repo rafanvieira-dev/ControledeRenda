@@ -19,14 +19,35 @@ function carregarPaginaAtual() {
     if (document.getElementById('lista-emprestimos')) renderizarEmprestimos();
 }
 
+// --- UTILITÁRIOS ---
+function formatarData(dataString) {
+    if(!dataString) return "N/A";
+    let partes = dataString.split('-');
+    if(partes.length !== 3) return dataString;
+    return `${partes[2]}/${partes[1]}/${partes[0]}`; // Formata para DD/MM/AAAA
+}
+
+function calcularDataFim(dataInicio, qtdTotal) {
+    if (!dataInicio) return "N/A";
+    let data = new Date(dataInicio + "T00:00:00");
+    data.setMonth(data.getMonth() + qtdTotal - 1);
+    let mes = String(data.getMonth() + 1).padStart(2, '0');
+    let ano = data.getFullYear();
+    return `${mes}/${ano}`;
+}
+
 // --- FUNÇÕES DE RENDERIZAÇÃO ---
 
 function renderizarResumo() {
     let totalRenda = bancoDeDados.renda.reduce((acc, item) => acc + item.valor, 0);
     let totalFixas = bancoDeDados.fixas.reduce((acc, item) => acc + item.valor, 0);
-    let totalCartoes = bancoDeDados.cartoes.reduce((acc, item) => acc + item.valorParcela, 0);
     
-    // Soma a parcela do empréstimo APENAS se ele ainda não estiver quitado
+    // Soma apenas se a compra do cartão não estiver quitada
+    let totalCartoes = bancoDeDados.cartoes.reduce((acc, item) => {
+        return (item.parcelasPagas < item.qtdParcelas) ? acc + item.valorParcela : acc;
+    }, 0);
+    
+    // Soma apenas se o empréstimo não estiver quitado
     let totalEmprestimos = bancoDeDados.emprestimos.reduce((acc, item) => {
         return (item.qtdPagas < item.qtdTotal) ? acc + item.valorParcela : acc;
     }, 0);
@@ -48,31 +69,63 @@ function renderizarLista(categoria, idLista) {
     });
 }
 
+// NOVA LÓGICA DE CARTÕES (Agrupando por Fatura)
 function renderizarCartoes() {
-    const lista = document.getElementById('lista-cartoes');
-    lista.innerHTML = '';
-    bancoDeDados.cartoes.forEach((item, index) => {
-        lista.innerHTML += `
-            <li>
-                <div><strong>[${item.cartao}] ${item.descricao}</strong><br><small>Restam: ${item.qtdParcelas}x de R$ ${item.valorParcela.toFixed(2)}</small></div>
-                <div class="botoes-acao">
-                    <button class="btn-baixa" onclick="darBaixaCartao(${index})">Pagar 1x</button>
-                    <button class="btn-del" onclick="deletar('cartoes', ${index})">X</button>
-                </div>
-            </li>`;
+    const conteinerCartoes = document.getElementById('lista-cartoes');
+    conteinerCartoes.innerHTML = '';
+
+    let cartoesAgrupados = {};
+
+    // Agrupa as compras pelo nome do cartão
+    bancoDeDados.cartoes.forEach((compra, index) => {
+        let nomeUpper = compra.cartao.toUpperCase(); // Padroniza o nome
+        
+        if(!cartoesAgrupados[nomeUpper]) {
+            cartoesAgrupados[nomeUpper] = { totalFatura: 0, compras: [] };
+        }
+        
+        // Se a compra ainda não foi quitada, soma na fatura do mês
+        if (compra.parcelasPagas < compra.qtdParcelas) {
+            cartoesAgrupados[nomeUpper].totalFatura += compra.valorParcela;
+        }
+        
+        // Guarda a compra e o index original dela para podermos deletar/dar baixa
+        cartoesAgrupados[nomeUpper].compras.push({...compra, indexOriginal: index});
     });
-}
 
-// --- NOVA LÓGICA DE EMPRÉSTIMOS ---
+    // Desenha as faturas na tela
+    for (let nomeCartao in cartoesAgrupados) {
+        let dadosCartao = cartoesAgrupados[nomeCartao];
 
-// Calcula quando o empréstimo vai acabar
-function calcularDataFim(dataInicio, qtdTotal) {
-    if (!dataInicio) return "N/A";
-    let data = new Date(dataInicio + "T00:00:00"); // Resolve problema de fuso horário
-    data.setMonth(data.getMonth() + qtdTotal - 1);
-    let mes = String(data.getMonth() + 1).padStart(2, '0');
-    let ano = data.getFullYear();
-    return `${mes}/${ano}`;
+        let htmlFatura = `
+            <div class="fatura-cartao">
+                <div class="fatura-cabecalho">
+                    <h3>💳 ${nomeCartao}</h3>
+                    <div class="fatura-total">Fatura Atual: R$ ${dadosCartao.totalFatura.toFixed(2)}</div>
+                </div>
+                <ul>
+        `;
+
+        dadosCartao.compras.forEach(compra => {
+            let finalizado = compra.parcelasPagas >= compra.qtdParcelas;
+            htmlFatura += `
+                <li style="${finalizado ? 'opacity: 0.5; border-left-color: #28a745;' : ''}">
+                    <div>
+                        <strong>${compra.descricao}</strong> <small style="color:#666;">(${formatarData(compra.dataCompra)})</small><br>
+                        <small>Total: R$ ${compra.valorTotal.toFixed(2)} | Parcela: R$ ${compra.valorParcela.toFixed(2)}</small><br>
+                        <small>Progresso: ${compra.parcelasPagas}/${compra.qtdParcelas} parcelas pagas</small>
+                    </div>
+                    <div class="botoes-acao">
+                        ${!finalizado ? `<button class="btn-baixa" onclick="darBaixaCartao(${compra.indexOriginal})">Pagar 1x</button>` : `<span style="color:#28a745; font-weight:bold; margin-right: 10px;">Quitada!</span>`}
+                        <button class="btn-del" onclick="deletar('cartoes', ${compra.indexOriginal})">X</button>
+                    </div>
+                </li>
+            `;
+        });
+
+        htmlFatura += `</ul></div>`;
+        conteinerCartoes.innerHTML += htmlFatura;
+    }
 }
 
 function renderizarEmprestimos() {
@@ -99,11 +152,12 @@ function renderizarEmprestimos() {
 
 // --- AÇÕES ---
 function darBaixaCartao(index) {
-    if (bancoDeDados.cartoes[index].qtdParcelas > 1) {
-        bancoDeDados.cartoes[index].qtdParcelas -= 1;
+    let compra = bancoDeDados.cartoes[index];
+    if (compra.parcelasPagas < compra.qtdParcelas - 1) {
+        compra.parcelasPagas += 1;
     } else {
-        alert('Última parcela do cartão paga! Removido.');
-        bancoDeDados.cartoes.splice(index, 1);
+        compra.parcelasPagas += 1;
+        alert('Você pagou a última parcela desta compra!');
     }
     salvarDados();
 }
@@ -141,24 +195,41 @@ if(formFixas) formFixas.addEventListener('submit', (e) => {
     formFixas.reset(); salvarDados();
 });
 
+// Formulário de Cartões
 const formCartoes = document.getElementById('form-cartoes');
-if(formCartoes) formCartoes.addEventListener('submit', (e) => {
-    e.preventDefault();
-    bancoDeDados.cartoes.push({
-        cartao: document.getElementById('cartao-nome').value, descricao: document.getElementById('desc').value,
-        valorParcela: parseFloat(document.getElementById('valor').value), qtdParcelas: parseInt(document.getElementById('qtd').value)
-    });
-    formCartoes.reset(); salvarDados();
-});
+if(formCartoes) {
+    const selectQtd = document.getElementById('qtd');
+    for(let i = 1; i <= 48; i++) selectQtd.innerHTML += `<option value="${i}">${i}x</option>`;
 
+    formCartoes.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        let valorTotal = parseFloat(document.getElementById('valor-total').value);
+        let qtd = parseInt(document.getElementById('qtd').value);
+        let valorParcela = valorTotal / qtd; // Calcula o valor da parcela automaticamente
+
+        // Se for uma versão antiga dos dados, isso garante que não quebre
+        bancoDeDados.cartoes.push({
+            cartao: document.getElementById('cartao-nome').value.trim(),
+            descricao: document.getElementById('desc').value,
+            valorTotal: valorTotal,
+            valorParcela: valorParcela,
+            qtdParcelas: qtd,
+            parcelasPagas: 0, // Começa com zero parcelas pagas
+            dataCompra: document.getElementById('data-compra').value
+        });
+        formCartoes.reset(); salvarDados();
+    });
+}
+
+// Formulário de Empréstimos
 const formEmprestimos = document.getElementById('form-emprestimos');
 if(formEmprestimos) {
-    // Cria as opções de 2 a 24 e 0 a 24 automaticamente
     const selectTotal = document.getElementById('qtd-total');
     const selectPagas = document.getElementById('qtd-pagas');
     
-    for(let i = 2; i <= 24; i++) selectTotal.innerHTML += `<option value="${i}">${i}x</option>`;
-    for(let i = 0; i <= 24; i++) selectPagas.innerHTML += `<option value="${i}">${i}x</option>`;
+    for(let i = 2; i <= 360; i++) selectTotal.innerHTML += `<option value="${i}">${i}x</option>`;
+    for(let i = 0; i <= 360; i++) selectPagas.innerHTML += `<option value="${i}">${i}x</option>`;
 
     formEmprestimos.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -167,7 +238,7 @@ if(formEmprestimos) {
         let pagas = parseInt(document.getElementById('qtd-pagas').value);
         
         if (pagas > total) {
-            alert("Erro: O número de parcelas pagas não pode ser maior que o total de parcelas.");
+            alert("Erro: O número de parcelas pagas não pode ser maior que o total.");
             return;
         }
 

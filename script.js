@@ -1,17 +1,71 @@
-// Base de Dados com Proteção para Dados Antigos
-let dadosSalvos = JSON.parse(localStorage.getItem('financas_db')) || {};
+// Importando as funções do Firebase (Usando a sua versão 12.10.0)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-let bancoDeDados = {
-    renda: dadosSalvos.renda || [],
-    fixas: dadosSalvos.fixas || [],
-    cartoes: dadosSalvos.cartoes || [],
-    emprestimos: dadosSalvos.emprestimos || [],
-    acordos: dadosSalvos.acordos || [] // Garante que nunca dê erro de "espaço em branco"
+// Sua configuração do Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyBqVhJ76IvwgcV7xWiYttE-oVZEhzCEXFQ",
+    authDomain: "controlederenda-89eaa.firebaseapp.com",
+    projectId: "controlederenda-89eaa",
+    storageBucket: "controlederenda-89eaa.firebasestorage.app",
+    messagingSenderId: "524591368682",
+    appId: "1:524591368682:web:3f295577a7f757036b0a93"
 };
 
-function salvarDados() {
-    localStorage.setItem('financas_db', JSON.stringify(bancoDeDados));
-    carregarPaginaAtual();
+// Inicializa o Firebase e o Banco de Dados (Firestore)
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Nossa base de dados local temporária
+let bancoDeDados = {
+    renda: [],
+    fixas: [],
+    cartoes: [],
+    emprestimos: [],
+    acordos: []
+};
+
+// Referência para o documento onde vamos salvar TUDO
+// Estamos salvando na coleção "usuarios", no documento "meu_controle"
+const docRef = doc(db, "usuarios", "meu_controle");
+
+// 1. FUNÇÃO PARA BUSCAR OS DADOS DA NUVEM AO ABRIR A PÁGINA
+async function inicializarApp() {
+    try {
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            // Se já tem dados na nuvem, joga pra nossa variável
+            let dadosNuvem = docSnap.data();
+            bancoDeDados = {
+                renda: dadosNuvem.renda || [],
+                fixas: dadosNuvem.fixas || [],
+                cartoes: dadosNuvem.cartoes || [],
+                emprestimos: dadosNuvem.emprestimos || [],
+                acordos: dadosNuvem.acordos || []
+            };
+        } else {
+            console.log("Nenhum dado encontrado na nuvem. Criando novo banco...");
+            await salvarDadosNuvem(); // Cria o documento vazio lá
+        }
+        
+        carregarPaginaAtual(); // Só carrega a tela depois que baixar da nuvem
+        
+    } catch (error) {
+        console.error("Erro ao buscar dados do Firebase:", error);
+        alert("Erro ao conectar no banco de dados. Verifique a internet ou se o banco foi criado no Firebase.");
+    }
+}
+
+// 2. FUNÇÃO PARA SALVAR NA NUVEM
+async function salvarDadosNuvem() {
+    try {
+        await setDoc(docRef, bancoDeDados);
+        carregarPaginaAtual();
+    } catch (error) {
+        console.error("Erro ao salvar no Firebase:", error);
+        alert("Erro ao salvar os dados na nuvem.");
+    }
 }
 
 function carregarPaginaAtual() {
@@ -35,53 +89,42 @@ function formatarData(dataString) {
 
 function renderizarResumo() {
     let hoje = new Date().getDate(); 
-
     let totalRenda = bancoDeDados.renda.reduce((acc, item) => acc + item.valor, 0);
-    
-    let despesasPagas = 0; // Venceu (dia <= hoje)
-    let despesasAVencer = 0; // Vai vencer (dia > hoje)
-    let dividaTotalLongoPrazo = 0; // Soma de todas as parcelas restantes
+    let despesasPagas = 0; 
+    let despesasAVencer = 0; 
+    let dividaTotalLongoPrazo = 0; 
 
-    // FIXAS
     bancoDeDados.fixas.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
         if (hoje >= diaVenc) despesasPagas += item.valor;
         else despesasAVencer += item.valor;
     });
 
-    // CARTÕES
     bancoDeDados.cartoes.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
         let parcelasRestantes = item.qtdParcelas - item.parcelasPagas;
-        
         if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += item.valorParcela;
             else despesasAVencer += item.valorParcela;
-            
             dividaTotalLongoPrazo += (item.valorParcela * parcelasRestantes);
         }
     });
 
-    // EMPRÉSTIMOS
     bancoDeDados.emprestimos.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
         let parcelasRestantes = item.qtdTotal - item.qtdPagas;
-
         if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += item.valorParcela;
             else despesasAVencer += item.valorParcela;
-            
             dividaTotalLongoPrazo += (item.valorParcela * parcelasRestantes);
         }
     });
 
-    // ACORDOS
     bancoDeDados.acordos.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
         if (item.qtdFaltam > 0) {
             if (hoje >= diaVenc) despesasPagas += item.valorParcela;
             else despesasAVencer += item.valorParcela;
-            
             dividaTotalLongoPrazo += (item.valorParcela * item.qtdFaltam);
         }
     });
@@ -92,7 +135,6 @@ function renderizarResumo() {
     
     let saldoAtual = totalRenda - despesasPagas - despesasAVencer;
     document.getElementById('resumo-saldo').innerText = saldoAtual.toFixed(2);
-
     document.getElementById('resumo-divida-total').innerText = dividaTotalLongoPrazo.toFixed(2);
 }
 
@@ -108,6 +150,7 @@ function renderizarLista(categoria, idLista) {
 
 function renderizarListaFixas() {
     const lista = document.getElementById('lista-fixas');
+    if(!lista) return;
     lista.innerHTML = '';
     bancoDeDados.fixas.forEach((item, index) => {
         lista.innerHTML += `
@@ -126,29 +169,25 @@ function renderizarListaFixas() {
 
 function renderizarCartoes() {
     const conteinerCartoes = document.getElementById('lista-cartoes');
+    if(!conteinerCartoes) return;
     conteinerCartoes.innerHTML = '';
 
     let cartoesAgrupados = {};
 
     bancoDeDados.cartoes.forEach((compra, index) => {
         let nomeUpper = compra.cartao.toUpperCase(); 
-        
-        if(!cartoesAgrupados[nomeUpper]) {
-            cartoesAgrupados[nomeUpper] = { totalMensal: 0, totalDevedor: 0, compras: [] };
-        }
+        if(!cartoesAgrupados[nomeUpper]) cartoesAgrupados[nomeUpper] = { totalMensal: 0, totalDevedor: 0, compras: [] };
         
         let parcelasRestantes = compra.qtdParcelas - compra.parcelasPagas;
         if (parcelasRestantes > 0) {
             cartoesAgrupados[nomeUpper].totalMensal += compra.valorParcela;
             cartoesAgrupados[nomeUpper].totalDevedor += (compra.valorParcela * parcelasRestantes);
         }
-        
         cartoesAgrupados[nomeUpper].compras.push({...compra, indexOriginal: index});
     });
 
     for (let nomeCartao in cartoesAgrupados) {
         let dados = cartoesAgrupados[nomeCartao];
-
         let htmlFatura = `
             <div class="fatura-cartao">
                 <div class="fatura-cabecalho" style="background: #e9ecef; padding: 10px; border-radius: 5px; margin-top: 15px;">
@@ -158,8 +197,7 @@ function renderizarCartoes() {
                         <span style="color: #dc3545;">Dívida Total: <strong>R$ ${dados.totalDevedor.toFixed(2)}</strong></span>
                     </div>
                 </div>
-                <ul>
-        `;
+                <ul>`;
 
         dados.compras.forEach(compra => {
             let finalizado = compra.parcelasPagas >= compra.qtdParcelas;
@@ -174,10 +212,8 @@ function renderizarCartoes() {
                         ${!finalizado ? `<button class="btn-baixa" onclick="darBaixaCartao(${compra.indexOriginal})">Pagar 1x</button>` : `<span style="color:#28a745; font-weight:bold; margin-right: 10px;">Quitada!</span>`}
                         <button class="btn-del" onclick="deletar('cartoes', ${compra.indexOriginal})">X</button>
                     </div>
-                </li>
-            `;
+                </li>`;
         });
-
         htmlFatura += `</ul></div>`;
         conteinerCartoes.innerHTML += htmlFatura;
     }
@@ -185,6 +221,7 @@ function renderizarCartoes() {
 
 function renderizarEmprestimos() {
     const lista = document.getElementById('lista-emprestimos');
+    if(!lista) return;
     lista.innerHTML = '';
     bancoDeDados.emprestimos.forEach((item, index) => {
         let finalizado = item.qtdPagas >= item.qtdTotal;
@@ -209,6 +246,7 @@ function renderizarEmprestimos() {
 
 function renderizarAcordos() {
     const lista = document.getElementById('lista-acordos');
+    if(!lista) return;
     lista.innerHTML = '';
     
     bancoDeDados.acordos.forEach((item, index) => {
@@ -231,58 +269,62 @@ function renderizarAcordos() {
     });
 }
 
-// --- AÇÕES ---
-function darBaixaCartao(index) {
+// --- AÇÕES COM SALVAMENTO NA NUVEM ---
+
+// As funções precisam estar atreladas ao 'window' para funcionarem com onclick no HTML usando type="module"
+window.darBaixaCartao = async function(index) {
     let compra = bancoDeDados.cartoes[index];
     if (compra.parcelasPagas < compra.qtdParcelas) {
         compra.parcelasPagas += 1;
         if(compra.parcelasPagas === compra.qtdParcelas) alert('Você pagou a última parcela desta compra!');
     }
-    salvarDados();
+    await salvarDadosNuvem();
 }
 
-function darBaixaEmprestimo(index) {
+window.darBaixaEmprestimo = async function(index) {
     let emp = bancoDeDados.emprestimos[index];
     if (emp.qtdPagas < emp.qtdTotal) {
         emp.qtdPagas += 1;
         if(emp.qtdPagas === emp.qtdTotal) alert('Parabéns! Você pagou a última parcela deste empréstimo!');
     }
-    salvarDados();
+    await salvarDadosNuvem();
 }
 
-function darBaixaAcordo(index) {
+window.darBaixaAcordo = async function(index) {
     let acordo = bancoDeDados.acordos[index];
     if (acordo.qtdFaltam > 0) {
         acordo.qtdFaltam -= 1;
         if(acordo.qtdFaltam === 0) alert('Acordo quitado com sucesso!');
     }
-    salvarDados();
+    await salvarDadosNuvem();
 }
 
-function deletar(categoria, index) {
+window.deletar = async function(categoria, index) {
     if(confirm('Apagar este registro?')) {
         bancoDeDados[categoria].splice(index, 1);
-        salvarDados();
+        await salvarDadosNuvem();
     }
 }
 
 // --- EVENTOS DE FORMULÁRIO ---
 const formRenda = document.getElementById('form-renda');
-if(formRenda) formRenda.addEventListener('submit', (e) => {
+if(formRenda) formRenda.addEventListener('submit', async (e) => {
     e.preventDefault();
     bancoDeDados.renda.push({ descricao: document.getElementById('desc').value, valor: parseFloat(document.getElementById('valor').value) });
-    formRenda.reset(); salvarDados();
+    formRenda.reset(); 
+    await salvarDadosNuvem();
 });
 
 const formFixas = document.getElementById('form-fixas');
-if(formFixas) formFixas.addEventListener('submit', (e) => {
+if(formFixas) formFixas.addEventListener('submit', async (e) => {
     e.preventDefault();
     bancoDeDados.fixas.push({ 
         descricao: document.getElementById('desc').value, 
         valor: parseFloat(document.getElementById('valor').value),
         diaVencimento: parseInt(document.getElementById('dia-vencimento').value)
     });
-    formFixas.reset(); salvarDados();
+    formFixas.reset(); 
+    await salvarDadosNuvem();
 });
 
 const formCartoes = document.getElementById('form-cartoes');
@@ -290,9 +332,8 @@ if(formCartoes) {
     const selectQtd = document.getElementById('qtd');
     for(let i = 1; i <= 48; i++) selectQtd.innerHTML += `<option value="${i}">${i}x</option>`;
 
-    formCartoes.addEventListener('submit', (e) => {
+    formCartoes.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         let valorParcela = parseFloat(document.getElementById('valor-parcela').value);
         let qtd = parseInt(document.getElementById('qtd').value);
         let valorTotal = valorParcela * qtd; 
@@ -307,7 +348,8 @@ if(formCartoes) {
             dataCompra: document.getElementById('data-compra').value,
             diaVencimento: parseInt(document.getElementById('dia-vencimento').value)
         });
-        formCartoes.reset(); salvarDados();
+        formCartoes.reset(); 
+        await salvarDadosNuvem();
     });
 }
 
@@ -319,7 +361,7 @@ if(formEmprestimos) {
     for(let i = 2; i <= 360; i++) selectTotal.innerHTML += `<option value="${i}">${i}x</option>`;
     for(let i = 0; i <= 360; i++) selectPagas.innerHTML += `<option value="${i}">${i}x</option>`;
 
-    formEmprestimos.addEventListener('submit', (e) => {
+    formEmprestimos.addEventListener('submit', async (e) => {
         e.preventDefault();
         let total = parseInt(document.getElementById('qtd-total').value);
         let pagas = parseInt(document.getElementById('qtd-pagas').value);
@@ -333,13 +375,14 @@ if(formEmprestimos) {
             qtdPagas: pagas,
             diaVencimento: diaVenc
         });
-        formEmprestimos.reset(); salvarDados();
+        formEmprestimos.reset(); 
+        await salvarDadosNuvem();
     });
 }
 
 const formAcordos = document.getElementById('form-acordos');
 if(formAcordos) {
-    formAcordos.addEventListener('submit', (e) => {
+    formAcordos.addEventListener('submit', async (e) => {
         e.preventDefault();
         bancoDeDados.acordos.push({
             descricao: document.getElementById('desc').value, 
@@ -347,9 +390,10 @@ if(formAcordos) {
             qtdFaltam: parseInt(document.getElementById('qtd-faltam').value),
             diaVencimento: parseInt(document.getElementById('dia-vencimento').value)
         });
-        formAcordos.reset(); salvarDados();
+        formAcordos.reset(); 
+        await salvarDadosNuvem();
     });
 }
 
-// Inicia
-carregarPaginaAtual();
+// INICIA O APP (BUSCA DO FIREBASE PRIMEIRO)
+inicializarApp();

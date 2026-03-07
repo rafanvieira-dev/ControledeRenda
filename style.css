@@ -8,9 +8,9 @@ h1, h2 { text-align: center; color: #333; }
 .menu a:hover { background: #d3d9df; }
 .menu a.ativo { background: #007bff; color: white; }
 
-/* Cards do Resumo */
+/* Cards do Resumo (Adaptados para 4 caixas e responsivo) */
 .painel { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
-.card { padding: 15px; border-radius: 5px; font-weight: bold; color: white; flex: 1 1 calc(50% - 15px); min-width: 120px; text-align: center; }
+.card { padding: 15px 5px; border-radius: 5px; font-weight: bold; color: white; flex: 1 1 calc(25% - 10px); min-width: 110px; text-align: center; font-size: 14px; }
 .receitas { background-color: #28a745; }
 .despesas { background-color: #dc3545; }
 .alerta { background-color: #fd7e14; }

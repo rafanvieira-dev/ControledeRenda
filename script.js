@@ -1,10 +1,12 @@
-// Base de Dados
-let bancoDeDados = JSON.parse(localStorage.getItem('financas_db')) || {
-    renda: [],
-    fixas: [],
-    cartoes: [],
-    emprestimos: [],
-    acordos: [] // Nova categoria
+// Base de Dados com Proteção para Dados Antigos
+let dadosSalvos = JSON.parse(localStorage.getItem('financas_db')) || {};
+
+let bancoDeDados = {
+    renda: dadosSalvos.renda || [],
+    fixas: dadosSalvos.fixas || [],
+    cartoes: dadosSalvos.cartoes || [],
+    emprestimos: dadosSalvos.emprestimos || [],
+    acordos: dadosSalvos.acordos || [] // Garante que nunca dê erro de "espaço em branco"
 };
 
 function salvarDados() {
@@ -53,11 +55,9 @@ function renderizarResumo() {
         let parcelasRestantes = item.qtdParcelas - item.parcelasPagas;
         
         if (parcelasRestantes > 0) {
-            // Conta apenas 1 parcela para o mês atual
             if (hoje >= diaVenc) despesasPagas += item.valorParcela;
             else despesasAVencer += item.valorParcela;
             
-            // Soma na dívida total de longo prazo
             dividaTotalLongoPrazo += (item.valorParcela * parcelasRestantes);
         }
     });
@@ -90,7 +90,6 @@ function renderizarResumo() {
     document.getElementById('resumo-despesas').innerText = despesasPagas.toFixed(2);
     document.getElementById('resumo-avencer').innerText = despesasAVencer.toFixed(2);
     
-    // O Saldo é a Renda menos o que JÁ VENCEU e o que VAI VENCER este mês
     let saldoAtual = totalRenda - despesasPagas - despesasAVencer;
     document.getElementById('resumo-saldo').innerText = saldoAtual.toFixed(2);
 
@@ -211,7 +210,6 @@ function renderizarEmprestimos() {
 function renderizarAcordos() {
     const lista = document.getElementById('lista-acordos');
     lista.innerHTML = '';
-    if(!bancoDeDados.acordos) bancoDeDados.acordos = []; // Garantia de compatibilidade
     
     bancoDeDados.acordos.forEach((item, index) => {
         let finalizado = item.qtdFaltam <= 0;

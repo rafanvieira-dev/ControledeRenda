@@ -1,9 +1,7 @@
-// Importações do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-// Sua configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyBqVhJ76IvwgcV7xWiYttE-oVZEhzCEXFQ",
     authDomain: "controlederenda-89eaa.firebaseapp.com",
@@ -13,7 +11,6 @@ const firebaseConfig = {
     appId: "1:524591368682:web:3f295577a7f757036b0a93"
 };
 
-// Inicializa o Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
@@ -22,24 +19,28 @@ const provider = new GoogleAuthProvider();
 let bancoDeDados = { renda: [], fixas: [], cartoes: [], emprestimos: [], acordos: [] };
 let docRef = null; 
 
-// --- CONTROLO DE AUTENTICAÇÃO ---
+// --- CONTROLO DE ECRÃS E AUTENTICAÇÃO ---
 onAuthStateChanged(auth, async (user) => {
+    const loadingSec = document.getElementById('loading-section');
     const loginSec = document.getElementById('login-section');
     const appCont = document.getElementById('app-container');
     const nameElement = document.getElementById('user-name');
 
     if (user) {
-        // Utilizador COM LOGIN
-        if(loginSec) loginSec.style.display = 'none';
-        if(appCont) appCont.style.display = 'block';
-        if(nameElement) nameElement.innerText = "Olá, " + user.displayName.split(" ")[0];
-
+        // COM LOGIN
+        if(nameElement) nameElement.innerText = user.displayName.split(" ")[0];
         docRef = doc(db, "usuarios", user.uid);
         await inicializarApp();
+        
+        // Esconde Loading e Login, Mostra a App
+        if(loadingSec) loadingSec.style.display = 'none';
+        if(loginSec) loginSec.style.display = 'none';
+        if(appCont) appCont.style.display = 'block';
     } else {
         // SEM LOGIN
-        if(loginSec) loginSec.style.display = 'block';
+        if(loadingSec) loadingSec.style.display = 'none';
         if(appCont) appCont.style.display = 'none';
+        if(loginSec) loginSec.style.display = 'block';
         docRef = null;
     }
 });
@@ -60,34 +61,26 @@ async function inicializarApp() {
         if (docSnap.exists()) {
             let dadosNuvem = docSnap.data();
             bancoDeDados = {
-                renda: dadosNuvem.renda || [],
-                fixas: dadosNuvem.fixas || [],
-                cartoes: dadosNuvem.cartoes || [],
-                emprestimos: dadosNuvem.emprestimos || [],
-                acordos: dadosNuvem.acordos || []
+                renda: dadosNuvem.renda || [], fixas: dadosNuvem.fixas || [],
+                cartoes: dadosNuvem.cartoes || [], emprestimos: dadosNuvem.emprestimos || [], acordos: dadosNuvem.acordos || []
             };
         } else {
-            await salvarDadosNuvem(false); // Falso = não mostra alerta de sucesso ao criar banco
+            await salvarDadosNuvem(false); 
         }
         carregarPaginaAtual();
     } catch (error) {
-        console.error(error);
-        alert("Erro ao ler dados: Confirme as regras do Firestore.");
+        console.error(error); alert("Erro ao ler dados da nuvem.");
     }
 }
 
 async function salvarDadosNuvem(mostrarAlerta = false) {
-    if (!docRef) {
-        alert("Erro: Tem de fazer login primeiro!");
-        return;
-    }
+    if (!docRef) return;
     try {
         await setDoc(docRef, bancoDeDados);
-        if(mostrarAlerta) alert("Guardado com sucesso!"); // Teste de gravação
+        if(mostrarAlerta) alert("Guardado com sucesso! ✔️"); 
         carregarPaginaAtual();
     } catch (error) {
-        console.error(error);
-        alert("Erro ao guardar na nuvem: " + error.message);
+        console.error(error); alert("Erro ao guardar.");
     }
 }
 
@@ -157,8 +150,13 @@ function renderizarLista(categoria, idLista) {
     lista.innerHTML = '';
     bancoDeDados[categoria].forEach((item, index) => {
         lista.innerHTML += `
-            <li><span>${item.descricao}</span> <span>R$ ${item.valor.toFixed(2)}</span> 
-            <button class="btn-del" onclick="deletar('${categoria}', ${index})">X</button></li>`;
+            <li>
+                <strong>${item.descricao}</strong> 
+                <div>
+                    <span style="margin-right: 15px; font-weight: bold; color: var(--primary);">R$ ${item.valor.toFixed(2)}</span> 
+                    <button class="btn-del" onclick="deletar('${categoria}', ${index})">X</button>
+                </div>
+            </li>`;
     });
 }
 
@@ -170,7 +168,7 @@ function renderizarListaFixas() {
         lista.innerHTML += `
             <li>
                 <div><strong>${item.descricao}</strong><br><small>Vence dia: ${item.diaVencimento || 'N/A'}</small></div>
-                <div><span style="margin-right: 15px;">R$ ${item.valor.toFixed(2)}</span><button class="btn-del" onclick="deletar('fixas', ${index})">X</button></div>
+                <div style="display: flex; align-items: center;"><span style="margin-right: 15px; font-weight: bold; color: var(--primary);">R$ ${item.valor.toFixed(2)}</span><button class="btn-del" onclick="deletar('fixas', ${index})">X</button></div>
             </li>`;
     });
 }
@@ -194,10 +192,10 @@ function renderizarCartoes() {
 
     for (let nomeCartao in cartoesAgrupados) {
         let dados = cartoesAgrupados[nomeCartao];
-        let htmlFatura = `<div class="fatura-cartao"><div class="fatura-cabecalho" style="background: #e9ecef; padding: 10px; border-radius: 5px; margin-top: 15px;"><h3>💳 ${nomeCartao}</h3><div style="display: flex; justify-content: space-between;"><span>Fatura do Mês: <strong>R$ ${dados.totalMensal.toFixed(2)}</strong></span><span style="color: #dc3545;">Dívida Total: <strong>R$ ${dados.totalDevedor.toFixed(2)}</strong></span></div></div><ul>`;
+        let htmlFatura = `<div class="fatura-cartao"><div class="fatura-cabecalho"><h3>💳 ${nomeCartao}</h3><div style="display: flex; justify-content: space-between;"><span>Fatura do Mês: <strong>R$ ${dados.totalMensal.toFixed(2)}</strong></span><span style="color: var(--danger);">Dívida Total: <strong>R$ ${dados.totalDevedor.toFixed(2)}</strong></span></div></div><ul style="border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 10px 10px; padding: 10px;">`;
         dados.compras.forEach(compra => {
             let finalizado = compra.parcelasPagas >= compra.qtdParcelas;
-            htmlFatura += `<li style="${finalizado ? 'opacity: 0.5; border-left-color: #28a745;' : ''}"><div><strong>${compra.descricao}</strong> <small style="color:#666;">(Venc: dia ${compra.diaVencimento || 'N/A'})</small><br><small>Parcela: R$ ${compra.valorParcela.toFixed(2)}</small><br><small>Progresso: ${compra.parcelasPagas}/${compra.qtdParcelas} pagas</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaCartao(${compra.indexOriginal})">Pagar 1x</button>` : `<span style="color:#28a745; font-weight:bold; margin-right: 10px;">Quitada!</span>`}<button class="btn-del" onclick="deletar('cartoes', ${compra.indexOriginal})">X</button></div></li>`;
+            htmlFatura += `<li style="${finalizado ? 'opacity: 0.5; border-left-color: var(--success);' : ''}"><div><strong>${compra.descricao}</strong> <small style="color:var(--text-muted);">(${compra.diaVencimento ? `Venc: dia ${compra.diaVencimento}` : 'N/A'})</small><br><small>Parcela: R$ ${compra.valorParcela.toFixed(2)}</small><br><small>Progresso: ${compra.parcelasPagas}/${compra.qtdParcelas} pagas</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaCartao(${compra.indexOriginal})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitada!</span>`}<button class="btn-del" onclick="deletar('cartoes', ${compra.indexOriginal})">X</button></div></li>`;
         });
         htmlFatura += `</ul></div>`;
         conteinerCartoes.innerHTML += htmlFatura;
@@ -212,7 +210,7 @@ function renderizarEmprestimos() {
         let finalizado = item.qtdPagas >= item.qtdTotal;
         let textoDiaVenc = item.diaVencimento ? ` | Vence dia: <strong>${item.diaVencimento}</strong>` : '';
         let dividaRestante = item.valorParcela * (item.qtdTotal - item.qtdPagas);
-        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: #28a745;' : ''}"><div><strong>${item.descricao}</strong><br><small>Progresso: ${item.qtdPagas}/${item.qtdTotal} pagas | Parcela: R$ ${item.valorParcela.toFixed(2)}</small><br><small style="color: #dc3545;">Falta Pagar: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: #666;">${textoDiaVenc}</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaEmprestimo(${index})">Pagar 1x</button>` : `<span style="color:#28a745; font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('emprestimos', ${index})">X</button></div></li>`;
+        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: var(--success);' : ''}"><div><strong>${item.descricao}</strong><br><small>Progresso: ${item.qtdPagas}/${item.qtdTotal} pagas | Parcela: R$ ${item.valorParcela.toFixed(2)}</small><br><small style="color: var(--danger);">Falta Pagar: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: var(--text-muted);">${textoDiaVenc}</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaEmprestimo(${index})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('emprestimos', ${index})">X</button></div></li>`;
     });
 }
 
@@ -223,28 +221,22 @@ function renderizarAcordos() {
     bancoDeDados.acordos.forEach((item, index) => {
         let finalizado = item.qtdFaltam <= 0;
         let dividaRestante = item.valorParcela * item.qtdFaltam;
-        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: #28a745;' : ''}"><div><strong>${item.descricao}</strong><br><small>Faltam: ${item.qtdFaltam} parcelas | Parcela: R$ ${item.valorParcela.toFixed(2)}</small><br><small style="color: #dc3545;">Dívida Restante: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: #666;">Vence dia: <strong>${item.diaVencimento}</strong></small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaAcordo(${index})">Pagar 1x</button>` : `<span style="color:#28a745; font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('acordos', ${index})">X</button></div></li>`;
+        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: var(--success);' : ''}"><div><strong>${item.descricao}</strong><br><small>Faltam: ${item.qtdFaltam} parcelas | Parcela: R$ ${item.valorParcela.toFixed(2)}</small><br><small style="color: var(--danger);">Dívida Restante: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: var(--text-muted);">Vence dia: <strong>${item.diaVencimento}</strong></small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaAcordo(${index})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('acordos', ${index})">X</button></div></li>`;
     });
 }
 
 // --- AÇÕES COM SALVAMENTO NA NUVEM ---
 window.darBaixaCartao = async function(index) {
-    bancoDeDados.cartoes[index].parcelasPagas += 1;
-    await salvarDadosNuvem(false);
+    bancoDeDados.cartoes[index].parcelasPagas += 1; await salvarDadosNuvem(false);
 }
 window.darBaixaEmprestimo = async function(index) {
-    bancoDeDados.emprestimos[index].qtdPagas += 1;
-    await salvarDadosNuvem(false);
+    bancoDeDados.emprestimos[index].qtdPagas += 1; await salvarDadosNuvem(false);
 }
 window.darBaixaAcordo = async function(index) {
-    bancoDeDados.acordos[index].qtdFaltam -= 1;
-    await salvarDadosNuvem(false);
+    bancoDeDados.acordos[index].qtdFaltam -= 1; await salvarDadosNuvem(false);
 }
 window.deletar = async function(categoria, index) {
-    if(confirm('Apagar este registro?')) {
-        bancoDeDados[categoria].splice(index, 1);
-        await salvarDadosNuvem(false);
-    }
+    if(confirm('Apagar este registro?')) { bancoDeDados[categoria].splice(index, 1); await salvarDadosNuvem(false); }
 }
 
 // --- EVENTOS DE FORMULÁRIO ---

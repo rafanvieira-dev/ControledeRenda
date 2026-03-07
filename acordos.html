@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acordos - Finanças</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Minhas Finanças</h1>
+        
+        <nav class="menu">
+            <a href="index.html">Saldo</a>
+            <a href="renda.html">Renda</a>
+            <a href="fixas.html">Fixas</a>
+            <a href="cartoes.html">Cartões</a>
+            <a href="emprestimos.html">Empréstimos</a>
+            <a href="acordos.html" class="ativo">Acordos</a>
+        </nav>
+
+        <h2>Meus Acordos</h2>
+        
+        <form id="form-acordos">
+            <input type="text" id="desc" placeholder="Ex: Acordo Faculdade" required>
+            <input type="number" id="valor-parcela" placeholder="Valor da Parcela (R$)" step="0.01" required>
+            
+            <label for="qtd-faltam">Quantas parcelas faltam?</label>
+            <input type="number" id="qtd-faltam" min="1" required>
+
+            <label for="dia-vencimento">Dia do Vencimento (Todo mês):</label>
+            <input type="number" id="dia-vencimento" min="1" max="31" placeholder="Ex: 5" required>
+
+            <button type="submit">Adicionar Acordo</button>
+        </form>
+
+        <ul id="lista-acordos"></ul>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

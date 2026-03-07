@@ -28,7 +28,6 @@ onAuthStateChanged(auth, async (user) => {
 
     if (user) {
         try {
-            // Tenta colocar o nome de forma segura
             if(nameElement) {
                 let nome = user.displayName ? user.displayName.split(" ")[0] : "Utilizador";
                 nameElement.innerText = "Olá, " + nome;
@@ -38,13 +37,11 @@ onAuthStateChanged(auth, async (user) => {
         } catch (erro) {
             console.error("Erro crítico ao carregar dados:", erro);
         } finally {
-            // O FINALLY GARANTE QUE O CARREGAMENTO DESAPARECE SEMPRE (mesmo se der erro)
             if(loadingSec) loadingSec.style.display = 'none';
             if(loginSec) loginSec.style.display = 'none';
             if(appCont) appCont.style.display = 'block';
         }
     } else {
-        // SEM LOGIN
         if(loadingSec) loadingSec.style.display = 'none';
         if(appCont) appCont.style.display = 'none';
         if(loginSec) loginSec.style.display = 'block';
@@ -77,7 +74,6 @@ async function inicializarApp() {
         carregarPaginaAtual();
     } catch (error) {
         console.error("Erro Firestore:", error); 
-        // Não usamos alert aqui para não bloquear o telemóvel
     }
 }
 
@@ -117,10 +113,13 @@ function renderizarResumo() {
     let hoje = new Date().getDate(); 
     let totalRenda = bancoDeDados.renda.reduce((acc, item) => acc + (item.valor || 0), 0);
     let despesasPagas = 0; let despesasAVencer = 0; let dividaTotalLongoPrazo = 0; 
+    let previsaoProximoMes = 0; // NOVA VARIÁVEL AQUI
 
     bancoDeDados.fixas.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
         if (hoje >= diaVenc) despesasPagas += (item.valor || 0); else despesasAVencer += (item.valor || 0);
+        // Despesas fixas sempre acontecem no mês seguinte
+        previsaoProximoMes += (item.valor || 0);
     });
 
     bancoDeDados.cartoes.forEach(item => {
@@ -129,6 +128,11 @@ function renderizarResumo() {
         if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
             dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
+            
+            // Se tem mais de 1 parcela restante, haverá cobrança no próximo mês
+            if (parcelasRestantes > 1) {
+                previsaoProximoMes += (item.valorParcela || 0);
+            }
         }
     });
 
@@ -138,14 +142,23 @@ function renderizarResumo() {
         if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
             dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
+            
+            if (parcelasRestantes > 1) {
+                previsaoProximoMes += (item.valorParcela || 0);
+            }
         }
     });
 
     bancoDeDados.acordos.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
-        if ((item.qtdFaltam || 0) > 0) {
+        let parcelasRestantes = item.qtdFaltam || 0;
+        if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
-            dividaTotalLongoPrazo += ((item.valorParcela || 0) * (item.qtdFaltam || 0));
+            dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
+            
+            if (parcelasRestantes > 1) {
+                previsaoProximoMes += (item.valorParcela || 0);
+            }
         }
     });
 
@@ -154,6 +167,12 @@ function renderizarResumo() {
     document.getElementById('resumo-avencer').innerText = despesasAVencer.toFixed(2);
     document.getElementById('resumo-saldo').innerText = (totalRenda - despesasPagas - despesasAVencer).toFixed(2);
     document.getElementById('resumo-divida-total').innerText = dividaTotalLongoPrazo.toFixed(2);
+    
+    // EXIBE A PREVISÃO NA TELA SE O ELEMENTO EXISTIR
+    let campoProximoMes = document.getElementById('resumo-proximo-mes');
+    if (campoProximoMes) {
+        campoProximoMes.innerText = previsaoProximoMes.toFixed(2);
+    }
 }
 
 function renderizarLista(categoria, idLista) {
@@ -192,7 +211,6 @@ function renderizarCartoes() {
     let cartoesAgrupados = {};
 
     bancoDeDados.cartoes.forEach((compra, index) => {
-        // Correção de erro de variável vazia aqui
         let nomeUpper = (compra.cartao || 'Desconhecido').toUpperCase(); 
         if(!cartoesAgrupados[nomeUpper]) cartoesAgrupados[nomeUpper] = { totalMensal: 0, totalDevedor: 0, compras: [] };
         

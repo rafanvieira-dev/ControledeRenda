@@ -3,35 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contas Fixas - Finanças</title>
+    <title>Renda - Finanças</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <h1>Minhas Finanças</h1>
-        
         <nav class="menu">
             <a href="index.html">Saldo</a>
-            <a href="renda.html">Renda</a>
-            <a href="fixas.html" class="ativo">Fixas</a>
+            <a href="renda.html" class="ativo">Renda</a>
+            <a href="fixas.html">Fixas</a>
             <a href="cartoes.html">Cartões</a>
             <a href="emprestimos.html">Empréstimos</a>
             <a href="acordos.html">Acordos</a>
         </nav>
 
-        <h2>Despesas Fixas Mensais</h2>
-        
-        <form id="form-fixas">
-            <input type="text" id="desc" placeholder="Ex: Conta de Luz, Internet..." required>
-            <input type="number" id="valor" placeholder="Valor Mensal (R$)" step="0.01" required>
-            <label for="dia-vencimento">Dia do Vencimento:</label>
-            <input type="number" id="dia-vencimento" min="1" max="31" placeholder="Ex: 15" required>
-            <button type="submit">Adicionar Conta Fixa</button>
+        <h2>Entradas e Proventos</h2>
+        <form id="form-renda">
+            <input type="text" id="desc" placeholder="Ex: Salário" required>
+            <input type="number" id="valor" placeholder="Valor (R$)" step="0.01" required>
+            <button type="submit">Adicionar Renda</button>
         </form>
-
-        <ul id="lista-fixas"></ul>
+        <ul id="lista-renda"></ul>
     </div>
-
     <script type="module" src="script.js"></script>
 </body>
 </html>

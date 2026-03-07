@@ -27,15 +27,22 @@ onAuthStateChanged(auth, async (user) => {
     const nameElement = document.getElementById('user-name');
 
     if (user) {
-        // COM LOGIN
-        if(nameElement) nameElement.innerText = user.displayName.split(" ")[0];
-        docRef = doc(db, "usuarios", user.uid);
-        await inicializarApp();
-        
-        // Esconde Loading e Login, Mostra a App
-        if(loadingSec) loadingSec.style.display = 'none';
-        if(loginSec) loginSec.style.display = 'none';
-        if(appCont) appCont.style.display = 'block';
+        try {
+            // Tenta colocar o nome de forma segura
+            if(nameElement) {
+                let nome = user.displayName ? user.displayName.split(" ")[0] : "Utilizador";
+                nameElement.innerText = "Olá, " + nome;
+            }
+            docRef = doc(db, "usuarios", user.uid);
+            await inicializarApp();
+        } catch (erro) {
+            console.error("Erro crítico ao carregar dados:", erro);
+        } finally {
+            // O FINALLY GARANTE QUE O CARREGAMENTO DESAPARECE SEMPRE (mesmo se der erro)
+            if(loadingSec) loadingSec.style.display = 'none';
+            if(loginSec) loginSec.style.display = 'none';
+            if(appCont) appCont.style.display = 'block';
+        }
     } else {
         // SEM LOGIN
         if(loadingSec) loadingSec.style.display = 'none';
@@ -69,7 +76,8 @@ async function inicializarApp() {
         }
         carregarPaginaAtual();
     } catch (error) {
-        console.error(error); alert("Erro ao ler dados da nuvem.");
+        console.error("Erro Firestore:", error); 
+        // Não usamos alert aqui para não bloquear o telemóvel
     }
 }
 
@@ -80,17 +88,21 @@ async function salvarDadosNuvem(mostrarAlerta = false) {
         if(mostrarAlerta) alert("Guardado com sucesso! ✔️"); 
         carregarPaginaAtual();
     } catch (error) {
-        console.error(error); alert("Erro ao guardar.");
+        console.error(error); alert("Erro ao guardar na nuvem.");
     }
 }
 
 function carregarPaginaAtual() {
-    if (document.getElementById('resumo-saldo')) renderizarResumo();
-    if (document.getElementById('lista-renda')) renderizarLista('renda', 'lista-renda');
-    if (document.getElementById('lista-fixas')) renderizarListaFixas();
-    if (document.getElementById('lista-cartoes')) renderizarCartoes();
-    if (document.getElementById('lista-emprestimos')) renderizarEmprestimos();
-    if (document.getElementById('lista-acordos')) renderizarAcordos();
+    try {
+        if (document.getElementById('resumo-saldo')) renderizarResumo();
+        if (document.getElementById('lista-renda')) renderizarLista('renda', 'lista-renda');
+        if (document.getElementById('lista-fixas')) renderizarListaFixas();
+        if (document.getElementById('lista-cartoes')) renderizarCartoes();
+        if (document.getElementById('lista-emprestimos')) renderizarEmprestimos();
+        if (document.getElementById('lista-acordos')) renderizarAcordos();
+    } catch (e) {
+        console.error("Erro a desenhar a página:", e);
+    }
 }
 
 function formatarData(dataString) {
@@ -103,37 +115,37 @@ function formatarData(dataString) {
 // --- FUNÇÕES DE RENDERIZAÇÃO ---
 function renderizarResumo() {
     let hoje = new Date().getDate(); 
-    let totalRenda = bancoDeDados.renda.reduce((acc, item) => acc + item.valor, 0);
+    let totalRenda = bancoDeDados.renda.reduce((acc, item) => acc + (item.valor || 0), 0);
     let despesasPagas = 0; let despesasAVencer = 0; let dividaTotalLongoPrazo = 0; 
 
     bancoDeDados.fixas.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
-        if (hoje >= diaVenc) despesasPagas += item.valor; else despesasAVencer += item.valor;
+        if (hoje >= diaVenc) despesasPagas += (item.valor || 0); else despesasAVencer += (item.valor || 0);
     });
 
     bancoDeDados.cartoes.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
-        let parcelasRestantes = item.qtdParcelas - item.parcelasPagas;
+        let parcelasRestantes = (item.qtdParcelas || 0) - (item.parcelasPagas || 0);
         if (parcelasRestantes > 0) {
-            if (hoje >= diaVenc) despesasPagas += item.valorParcela; else despesasAVencer += item.valorParcela;
-            dividaTotalLongoPrazo += (item.valorParcela * parcelasRestantes);
+            if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
+            dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
         }
     });
 
     bancoDeDados.emprestimos.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
-        let parcelasRestantes = item.qtdTotal - item.qtdPagas;
+        let parcelasRestantes = (item.qtdTotal || 0) - (item.qtdPagas || 0);
         if (parcelasRestantes > 0) {
-            if (hoje >= diaVenc) despesasPagas += item.valorParcela; else despesasAVencer += item.valorParcela;
-            dividaTotalLongoPrazo += (item.valorParcela * parcelasRestantes);
+            if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
+            dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
         }
     });
 
     bancoDeDados.acordos.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
-        if (item.qtdFaltam > 0) {
-            if (hoje >= diaVenc) despesasPagas += item.valorParcela; else despesasAVencer += item.valorParcela;
-            dividaTotalLongoPrazo += (item.valorParcela * item.qtdFaltam);
+        if ((item.qtdFaltam || 0) > 0) {
+            if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
+            dividaTotalLongoPrazo += ((item.valorParcela || 0) * (item.qtdFaltam || 0));
         }
     });
 
@@ -151,9 +163,9 @@ function renderizarLista(categoria, idLista) {
     bancoDeDados[categoria].forEach((item, index) => {
         lista.innerHTML += `
             <li>
-                <strong>${item.descricao}</strong> 
+                <strong>${item.descricao || 'Sem descrição'}</strong> 
                 <div>
-                    <span style="margin-right: 15px; font-weight: bold; color: var(--primary);">R$ ${item.valor.toFixed(2)}</span> 
+                    <span style="margin-right: 15px; font-weight: bold; color: var(--primary);">R$ ${(item.valor || 0).toFixed(2)}</span> 
                     <button class="btn-del" onclick="deletar('${categoria}', ${index})">X</button>
                 </div>
             </li>`;
@@ -167,8 +179,8 @@ function renderizarListaFixas() {
     bancoDeDados.fixas.forEach((item, index) => {
         lista.innerHTML += `
             <li>
-                <div><strong>${item.descricao}</strong><br><small>Vence dia: ${item.diaVencimento || 'N/A'}</small></div>
-                <div style="display: flex; align-items: center;"><span style="margin-right: 15px; font-weight: bold; color: var(--primary);">R$ ${item.valor.toFixed(2)}</span><button class="btn-del" onclick="deletar('fixas', ${index})">X</button></div>
+                <div><strong>${item.descricao || 'Sem descrição'}</strong><br><small>Vence dia: ${item.diaVencimento || 'N/A'}</small></div>
+                <div style="display: flex; align-items: center;"><span style="margin-right: 15px; font-weight: bold; color: var(--primary);">R$ ${(item.valor || 0).toFixed(2)}</span><button class="btn-del" onclick="deletar('fixas', ${index})">X</button></div>
             </li>`;
     });
 }
@@ -180,12 +192,14 @@ function renderizarCartoes() {
     let cartoesAgrupados = {};
 
     bancoDeDados.cartoes.forEach((compra, index) => {
-        let nomeUpper = compra.cartao.toUpperCase(); 
+        // Correção de erro de variável vazia aqui
+        let nomeUpper = (compra.cartao || 'Desconhecido').toUpperCase(); 
         if(!cartoesAgrupados[nomeUpper]) cartoesAgrupados[nomeUpper] = { totalMensal: 0, totalDevedor: 0, compras: [] };
-        let parcelasRestantes = compra.qtdParcelas - compra.parcelasPagas;
+        
+        let parcelasRestantes = (compra.qtdParcelas || 0) - (compra.parcelasPagas || 0);
         if (parcelasRestantes > 0) {
-            cartoesAgrupados[nomeUpper].totalMensal += compra.valorParcela;
-            cartoesAgrupados[nomeUpper].totalDevedor += (compra.valorParcela * parcelasRestantes);
+            cartoesAgrupados[nomeUpper].totalMensal += (compra.valorParcela || 0);
+            cartoesAgrupados[nomeUpper].totalDevedor += ((compra.valorParcela || 0) * parcelasRestantes);
         }
         cartoesAgrupados[nomeUpper].compras.push({...compra, indexOriginal: index});
     });
@@ -195,7 +209,7 @@ function renderizarCartoes() {
         let htmlFatura = `<div class="fatura-cartao"><div class="fatura-cabecalho"><h3>💳 ${nomeCartao}</h3><div style="display: flex; justify-content: space-between;"><span>Fatura do Mês: <strong>R$ ${dados.totalMensal.toFixed(2)}</strong></span><span style="color: var(--danger);">Dívida Total: <strong>R$ ${dados.totalDevedor.toFixed(2)}</strong></span></div></div><ul style="border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 10px 10px; padding: 10px;">`;
         dados.compras.forEach(compra => {
             let finalizado = compra.parcelasPagas >= compra.qtdParcelas;
-            htmlFatura += `<li style="${finalizado ? 'opacity: 0.5; border-left-color: var(--success);' : ''}"><div><strong>${compra.descricao}</strong> <small style="color:var(--text-muted);">(${compra.diaVencimento ? `Venc: dia ${compra.diaVencimento}` : 'N/A'})</small><br><small>Parcela: R$ ${compra.valorParcela.toFixed(2)}</small><br><small>Progresso: ${compra.parcelasPagas}/${compra.qtdParcelas} pagas</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaCartao(${compra.indexOriginal})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitada!</span>`}<button class="btn-del" onclick="deletar('cartoes', ${compra.indexOriginal})">X</button></div></li>`;
+            htmlFatura += `<li style="${finalizado ? 'opacity: 0.5; border-left-color: var(--success);' : ''}"><div><strong>${compra.descricao || ''}</strong> <small style="color:var(--text-muted);">(${compra.diaVencimento ? `Venc: dia ${compra.diaVencimento}` : 'N/A'})</small><br><small>Parcela: R$ ${(compra.valorParcela||0).toFixed(2)}</small><br><small>Progresso: ${compra.parcelasPagas||0}/${compra.qtdParcelas||0} pagas</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaCartao(${compra.indexOriginal})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitada!</span>`}<button class="btn-del" onclick="deletar('cartoes', ${compra.indexOriginal})">X</button></div></li>`;
         });
         htmlFatura += `</ul></div>`;
         conteinerCartoes.innerHTML += htmlFatura;
@@ -209,8 +223,8 @@ function renderizarEmprestimos() {
     bancoDeDados.emprestimos.forEach((item, index) => {
         let finalizado = item.qtdPagas >= item.qtdTotal;
         let textoDiaVenc = item.diaVencimento ? ` | Vence dia: <strong>${item.diaVencimento}</strong>` : '';
-        let dividaRestante = item.valorParcela * (item.qtdTotal - item.qtdPagas);
-        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: var(--success);' : ''}"><div><strong>${item.descricao}</strong><br><small>Progresso: ${item.qtdPagas}/${item.qtdTotal} pagas | Parcela: R$ ${item.valorParcela.toFixed(2)}</small><br><small style="color: var(--danger);">Falta Pagar: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: var(--text-muted);">${textoDiaVenc}</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaEmprestimo(${index})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('emprestimos', ${index})">X</button></div></li>`;
+        let dividaRestante = (item.valorParcela || 0) * ((item.qtdTotal || 0) - (item.qtdPagas || 0));
+        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: var(--success);' : ''}"><div><strong>${item.descricao || ''}</strong><br><small>Progresso: ${item.qtdPagas||0}/${item.qtdTotal||0} pagas | Parcela: R$ ${(item.valorParcela||0).toFixed(2)}</small><br><small style="color: var(--danger);">Falta Pagar: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: var(--text-muted);">${textoDiaVenc}</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaEmprestimo(${index})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('emprestimos', ${index})">X</button></div></li>`;
     });
 }
 
@@ -220,8 +234,8 @@ function renderizarAcordos() {
     lista.innerHTML = '';
     bancoDeDados.acordos.forEach((item, index) => {
         let finalizado = item.qtdFaltam <= 0;
-        let dividaRestante = item.valorParcela * item.qtdFaltam;
-        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: var(--success);' : ''}"><div><strong>${item.descricao}</strong><br><small>Faltam: ${item.qtdFaltam} parcelas | Parcela: R$ ${item.valorParcela.toFixed(2)}</small><br><small style="color: var(--danger);">Dívida Restante: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: var(--text-muted);">Vence dia: <strong>${item.diaVencimento}</strong></small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaAcordo(${index})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('acordos', ${index})">X</button></div></li>`;
+        let dividaRestante = (item.valorParcela || 0) * (item.qtdFaltam || 0);
+        lista.innerHTML += `<li style="${finalizado ? 'opacity: 0.6; border-left-color: var(--success);' : ''}"><div><strong>${item.descricao || ''}</strong><br><small>Faltam: ${item.qtdFaltam||0} parcelas | Parcela: R$ ${(item.valorParcela||0).toFixed(2)}</small><br><small style="color: var(--danger);">Dívida Restante: R$ ${dividaRestante.toFixed(2)}</small><br><small style="color: var(--text-muted);">Vence dia: <strong>${item.diaVencimento||'N/A'}</strong></small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaAcordo(${index})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitado!</span>`}<button class="btn-del" onclick="deletar('acordos', ${index})">X</button></div></li>`;
     });
 }
 

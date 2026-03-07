@@ -9,8 +9,8 @@ h1, h2 { text-align: center; color: #333; }
 .menu a.ativo { background: #007bff; color: white; }
 
 /* Cards do Resumo */
-.painel { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
-.card { padding: 15px; border-radius: 5px; font-weight: bold; color: white; flex: 1; text-align: center; }
+.painel { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
+.card { padding: 15px; border-radius: 5px; font-weight: bold; color: white; flex: 1 1 calc(50% - 15px); min-width: 120px; text-align: center; }
 .receitas { background-color: #28a745; }
 .despesas { background-color: #dc3545; }
 .alerta { background-color: #fd7e14; }

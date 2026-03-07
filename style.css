@@ -1,49 +1,131 @@
-body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
-.container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-h1, h2 { text-align: center; color: #333; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-/* Menu de Navegação em Links */
-.menu { display: flex; flex-wrap: wrap; justify-content: center; background: #e9ecef; border-radius: 8px; margin-bottom: 20px; padding: 5px;}
-.menu a { flex: 1; text-align: center; padding: 10px 2px; text-decoration: none; font-weight: bold; color: #495057; border-radius: 5px; transition: 0.2s; min-width: 70px; font-size: 14px;}
-.menu a:hover { background: #d3d9df; }
-.menu a.ativo { background: #007bff; color: white; }
-
-/* Cards do Resumo (Adaptados para 4 caixas e responsivo) */
-.painel { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
-.card { padding: 15px 5px; border-radius: 5px; font-weight: bold; color: white; flex: 1 1 calc(25% - 10px); min-width: 110px; text-align: center; font-size: 14px; }
-.receitas { background-color: #28a745; }
-.despesas { background-color: #dc3545; }
-.alerta { background-color: #fd7e14; }
-.saldo { background-color: #17a2b8; }
-
-/* Formulários e Listas */
-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-input, button { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-button[type="submit"] { background-color: #28a745; color: white; cursor: pointer; border: none; font-weight: bold;}
-button[type="submit"]:hover { background-color: #218838; }
-
-ul { list-style-type: none; padding: 0; }
-li { background: #f8f9fa; margin: 8px 0; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #007bff; border-radius: 4px; }
-
-/* Botoes Lista */
-.botoes-acao { display: flex; gap: 5px; }
-.btn-baixa { background: #ffc107; color: #333; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-.btn-del { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-
-/* Atualização para os campos de formulário */
-input, select, button { 
-    padding: 10px; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-    font-size: 16px; 
-    width: 100%;
-    box-sizing: border-box;
+:root {
+    --primary: #4F46E5; /* Roxo moderno */
+    --primary-hover: #4338CA;
+    --success: #10B981;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --info: #06B6D4;
+    --bg-color: #F3F4F6;
+    --card-bg: #FFFFFF;
+    --text-main: #1F2937;
+    --text-muted: #6B7280;
 }
 
-label { 
-    font-weight: bold; 
-    font-size: 14px; 
-    color: #495057; 
-    margin-top: 5px;
-    margin-bottom: -5px;
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: var(--bg-color); 
+    color: var(--text-main);
+    margin: 0; 
+    padding: 20px; 
 }
+
+/* Container Principal - Expandido para PC */
+.container { 
+    max-width: 1200px; /* Aproveita ecrãs grandes */
+    margin: 0 auto; 
+}
+
+.box-branca {
+    background: var(--card-bg); 
+    padding: 30px; 
+    border-radius: 16px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+}
+
+h1 { text-align: center; color: var(--primary); font-weight: 700; margin-bottom: 5px; }
+h2 { color: var(--text-main); font-size: 1.2rem; margin-bottom: 15px; border-bottom: 2px solid #E5E7EB; padding-bottom: 10px;}
+p.subtitulo { text-align: center; color: var(--text-muted); margin-bottom: 30px;}
+
+/* Animação de Carregamento */
+.loader-container {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh;
+}
+.spinner {
+    width: 50px; height: 50px; border: 5px solid #E5E7EB; border-top-color: var(--primary);
+    border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Ecrã de Login */
+.login-box {
+    max-width: 400px; margin: 10vh auto; text-align: center; padding: 40px 20px;
+}
+.btn-google {
+    background-color: #4285F4; width: 100%; padding: 15px; font-size: 16px;
+}
+.btn-google:hover { background-color: #357AE8; }
+
+/* Menu Moderno */
+.menu { 
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; 
+    background: #E5E7EB; border-radius: 12px; margin-bottom: 30px; padding: 10px;
+}
+.menu a { 
+    flex: 1; text-align: center; padding: 12px 5px; text-decoration: none; 
+    font-weight: 600; color: var(--text-muted); border-radius: 8px; 
+    transition: all 0.3s ease; min-width: 100px; font-size: 14px;
+}
+.menu a:hover { background: #D1D5DB; color: var(--text-main); transform: translateY(-2px); }
+.menu a.ativo { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
+
+/* Grid para PC (Lado a Lado) */
+.grid-layout {
+    display: grid; grid-template-columns: 1fr; gap: 30px;
+}
+@media (min-width: 800px) {
+    .grid-layout { grid-template-columns: 350px 1fr; /* Formulário à esquerda, Lista à direita */ }
+}
+
+/* Cards do Resumo (Dashboard) */
+.painel { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px; margin-bottom: 30px; }
+.card { 
+    padding: 20px; border-radius: 12px; font-weight: bold; color: white; 
+    flex: 1 1 calc(25% - 15px); min-width: 140px; text-align: center; font-size: 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s ease;
+}
+.card:hover { transform: translateY(-5px); }
+.receitas { background: linear-gradient(135deg, #10B981, #059669); }
+.despesas { background: linear-gradient(135deg, #EF4444, #DC2626); }
+.alerta { background: linear-gradient(135deg, #F59E0B, #D97706); }
+.saldo { background: linear-gradient(135deg, #06B6D4, #0891B2); }
+
+/* Formulários Modernos */
+form { display: flex; flex-direction: column; gap: 12px; background: #F9FAFB; padding: 20px; border-radius: 12px; border: 1px solid #E5E7EB;}
+input, select { 
+    padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 15px; 
+    width: 100%; box-sizing: border-box; transition: border-color 0.3s; font-family: 'Inter', sans-serif;
+}
+input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
+label { font-weight: 600; font-size: 13px; color: var(--text-muted); margin-bottom: -8px; margin-top: 5px; }
+
+/* Botões */
+button { 
+    padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; 
+    color: white; cursor: pointer; transition: all 0.3s ease; font-family: 'Inter', sans-serif;
+}
+button[type="submit"] { background-color: var(--success); margin-top: 10px; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
+button[type="submit"]:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3); }
+
+/* Listas */
+ul { list-style-type: none; padding: 0; margin: 0; }
+li { 
+    background: #F9FAFB; margin-bottom: 12px; padding: 15px; display: flex; flex-wrap: wrap; 
+    justify-content: space-between; align-items: center; gap: 10px;
+    border-left: 5px solid var(--primary); border-radius: 8px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s ease;
+}
+li:hover { background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transform: translateX(3px); }
+
+/* Botoes Ação Lista */
+.botoes-acao { display: flex; gap: 8px; }
+.btn-baixa { background: var(--warning); color: white; padding: 8px 12px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2); }
+.btn-baixa:hover { background: #D97706; transform: translateY(-2px); }
+.btn-del { background: var(--danger); padding: 8px 12px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); }
+.btn-del:hover { background: #DC2626; transform: translateY(-2px); }
+
+/* Fatura Cartão Especial */
+.fatura-cartao { margin-bottom: 20px; }
+.fatura-cabecalho { background: #F3F4F6; padding: 15px; border-radius: 10px 10px 0 0; border: 1px solid #E5E7EB; border-bottom: none;}
+.fatura-cabecalho h3 { margin: 0 0 10px 0; color: var(--primary); }

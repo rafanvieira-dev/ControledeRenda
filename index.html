@@ -3,51 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saldo - Finanças</title>
+    <title>Dashboard - Finanças</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 <body>
+    <div id="loading-section" class="loader-container">
+        <div class="spinner"></div>
+        <h2 style="color: #4F46E5; border:none;">A carregar a sua carteira...</h2>
+    </div>
 
-    <div id="login-section" class="container" style="text-align: center; margin-top: 50px;">
+    <div id="login-section" class="box-branca login-box" style="display: none;">
         <h1>Controle de Renda</h1>
-        <p>Faça login para aceder às suas finanças.</p>
-        <button onclick="loginComGoogle()" style="background-color: #4285F4; margin-top: 20px;">Fazer Login com o Google</button>
+        <p class="subtitulo">A sua vida financeira organizada na nuvem.</p>
+        <button class="btn-google" onclick="loginComGoogle()">Acessar com o Google</button>
     </div>
 
     <div id="app-container" style="display: none;">
         <div class="container">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h1>Minhas Finanças</h1>
-                <div>
-                    <span id="user-name" style="font-weight: bold; margin-right: 10px; color: #555;"></span>
-                    <button onclick="sair()" style="background-color: #dc3545; padding: 5px 10px;">Sair</button>
+            <div class="box-branca">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h1 style="margin: 0;">Minhas Finanças</h1>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span id="user-name" style="font-weight: 600; color: #4F46E5; font-size: 1.1rem;"></span>
+                        <button onclick="sair()" style="background-color: #EF4444; padding: 8px 15px; box-shadow:none;">Sair</button>
+                    </div>
                 </div>
-            </div>
 
-            <nav class="menu">
-                <a href="index.html" class="ativo">Saldo</a>
-                <a href="renda.html">Renda</a>
-                <a href="fixas.html">Fixas</a>
-                <a href="cartoes.html">Cartões</a>
-                <a href="emprestimos.html">Empréstimos</a>
-                <a href="acordos.html">Acordos</a>
-            </nav>
+                <nav class="menu">
+                    <a href="index.html" class="ativo">Dashboard</a>
+                    <a href="renda.html">Renda</a>
+                    <a href="fixas.html">Fixas</a>
+                    <a href="cartoes.html">Cartões</a>
+                    <a href="emprestimos.html">Empréstimos</a>
+                    <a href="acordos.html">Acordos</a>
+                </nav>
 
-            <h2>Resumo do Mês</h2>
-            <div class="painel">
-                <div class="card receitas">Renda<br>R$ <span id="resumo-receitas">0.00</span></div>
-                <div class="card despesas">Já Venceu<br>R$ <span id="resumo-despesas">0.00</span></div>
-                <div class="card alerta">A Vencer<br>R$ <span id="resumo-avencer">0.00</span></div>
-                <div class="card saldo">Saldo<br>R$ <span id="resumo-saldo">0.00</span></div>
-            </div>
-            
-            <h2 style="margin-top: 20px; color: #dc3545;">Visão Geral de Dívidas</h2>
-            <div class="painel">
-                <div class="card despesas" style="width: 100%;">Total Devedor (Longo Prazo)<br>R$ <span id="resumo-divida-total">0.00</span></div>
+                <h2>Resumo do Mês Atual</h2>
+                <div class="painel">
+                    <div class="card receitas">Renda<br><span style="font-size: 1.4rem;">R$ <span id="resumo-receitas">0.00</span></span></div>
+                    <div class="card despesas">Já Venceu/Pago<br><span style="font-size: 1.4rem;">R$ <span id="resumo-despesas">0.00</span></span></div>
+                    <div class="card alerta">Falta Pagar este Mês<br><span style="font-size: 1.4rem;">R$ <span id="resumo-avencer">0.00</span></span></div>
+                    <div class="card saldo">Saldo Livre<br><span style="font-size: 1.4rem;">R$ <span id="resumo-saldo">0.00</span></span></div>
+                </div>
+                
+                <h2 style="margin-top: 40px; color: #DC2626;">Visão Geral do Seu Endividamento</h2>
+                <div class="painel">
+                    <div class="card despesas" style="width: 100%; max-width: 400px; margin: 0 auto;">Dívida Acumulada (Longo Prazo)<br><span style="font-size: 1.6rem;">R$ <span id="resumo-divida-total">0.00</span></span></div>
+                </div>
             </div>
         </div>
     </div>
-
     <script type="module" src="script.js"></script>
 </body>
 </html>

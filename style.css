@@ -4,7 +4,7 @@ h1, h2 { text-align: center; color: #333; }
 
 /* Menu de Navegação em Links */
 .menu { display: flex; flex-wrap: wrap; justify-content: center; background: #e9ecef; border-radius: 8px; margin-bottom: 20px; padding: 5px;}
-.menu a { flex: 1; text-align: center; padding: 12px 5px; text-decoration: none; font-weight: bold; color: #495057; border-radius: 5px; transition: 0.2s; min-width: 80px;}
+.menu a { flex: 1; text-align: center; padding: 10px 2px; text-decoration: none; font-weight: bold; color: #495057; border-radius: 5px; transition: 0.2s; min-width: 70px; font-size: 14px;}
 .menu a:hover { background: #d3d9df; }
 .menu a.ativo { background: #007bff; color: white; }
 
@@ -13,6 +13,7 @@ h1, h2 { text-align: center; color: #333; }
 .card { padding: 15px; border-radius: 5px; font-weight: bold; color: white; flex: 1; text-align: center; }
 .receitas { background-color: #28a745; }
 .despesas { background-color: #dc3545; }
+.alerta { background-color: #fd7e14; }
 .saldo { background-color: #17a2b8; }
 
 /* Formulários e Listas */
@@ -28,7 +29,8 @@ li { background: #f8f9fa; margin: 8px 0; padding: 12px; display: flex; justify-c
 .botoes-acao { display: flex; gap: 5px; }
 .btn-baixa { background: #ffc107; color: #333; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
 .btn-del { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-/* Atualização para os campos de Empréstimos */
+
+/* Atualização para os campos de formulário */
 input, select, button { 
     padding: 10px; 
     border: 1px solid #ccc; 
@@ -43,5 +45,5 @@ label {
     font-size: 14px; 
     color: #495057; 
     margin-top: 5px;
-    margin-bottom: -5px; /* aproxima o texto da caixa */
+    margin-bottom: -5px;
 }

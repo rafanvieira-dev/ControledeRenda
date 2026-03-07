@@ -16,6 +16,7 @@
             <a href="fixas.html" class="ativo">Fixas</a>
             <a href="cartoes.html">Cartões</a>
             <a href="emprestimos.html">Empréstimos</a>
+            <a href="acordos.html">Acordos</a>
         </nav>
 
         <h2>Despesas Fixas Mensais</h2>
@@ -23,6 +24,8 @@
         <form id="form-fixas">
             <input type="text" id="desc" placeholder="Ex: Conta de Luz, Internet..." required>
             <input type="number" id="valor" placeholder="Valor Mensal (R$)" step="0.01" required>
+            <label for="dia-vencimento">Dia do Vencimento:</label>
+            <input type="number" id="dia-vencimento" min="1" max="31" placeholder="Ex: 15" required>
             <button type="submit">Adicionar Conta Fixa</button>
         </form>
 

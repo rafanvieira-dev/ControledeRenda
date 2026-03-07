@@ -16,6 +16,7 @@
             <a href="fixas.html">Fixas</a>
             <a href="cartoes.html" class="ativo">Cartões</a>
             <a href="emprestimos.html">Empréstimos</a>
+            <a href="acordos.html">Acordos</a>
         </nav>
 
         <h2>Faturas e Compras no Cartão</h2>
@@ -31,6 +32,9 @@
 
             <label for="data-compra">Data da Compra:</label>
             <input type="date" id="data-compra" required>
+
+            <label for="dia-vencimento">Dia do Vencimento da Fatura:</label>
+            <input type="number" id="dia-vencimento" min="1" max="31" placeholder="Ex: 10" required>
 
             <button type="submit">Adicionar Compra ao Cartão</button>
         </form>

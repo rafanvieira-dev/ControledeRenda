@@ -1,6 +1,7 @@
-// Importando as funções do Firebase (Usando a sua versão 12.10.0)
+// Importações do Firebase (incluindo Auth)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
 // Sua configuração do Firebase
 const firebaseConfig = {
@@ -12,30 +13,60 @@ const firebaseConfig = {
     appId: "1:524591368682:web:3f295577a7f757036b0a93"
 };
 
-// Inicializa o Firebase e o Banco de Dados (Firestore)
+// Inicializa o Firebase, Firestore e Auth
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-// Nossa base de dados local temporária
-let bancoDeDados = {
-    renda: [],
-    fixas: [],
-    cartoes: [],
-    emprestimos: [],
-    acordos: []
+let bancoDeDados = { renda: [], fixas: [], cartoes: [], emprestimos: [], acordos: [] };
+let docRef = null; // Agora isto será gerado a partir do UID do utilizador
+
+// --- CONTROLO DE AUTENTICAÇÃO ---
+
+// Escuta mudanças de estado (Login / Logout)
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        // Utilizador fez login
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('app-container').style.display = 'block';
+        
+        // Coloca o primeiro nome da pessoa no ecrã (se o elemento existir)
+        const nameElement = document.getElementById('user-name');
+        if(nameElement) nameElement.innerText = "Olá, " + user.displayName.split(" ")[0];
+
+        // Agora cada pessoa tem o seu próprio documento com base no seu ID (user.uid)
+        docRef = doc(db, "usuarios", user.uid);
+        
+        await inicializarApp();
+    } else {
+        // Utilizador saiu
+        document.getElementById('login-section').style.display = 'block';
+        document.getElementById('app-container').style.display = 'none';
+        docRef = null;
+    }
+});
+
+// Funções para os botões do HTML
+window.loginComGoogle = () => {
+    signInWithPopup(auth, provider).catch((error) => {
+        alert("Erro ao fazer login: " + error.message);
+    });
 };
 
-// Referência para o documento onde vamos salvar TUDO
-// Estamos salvando na coleção "usuarios", no documento "meu_controle"
-const docRef = doc(db, "usuarios", "meu_controle");
+window.sair = () => {
+    signOut(auth).then(() => {
+        window.location.href = "index.html"; // Redireciona para o início ao sair
+    });
+};
 
-// 1. FUNÇÃO PARA BUSCAR OS DADOS DA NUVEM AO ABRIR A PÁGINA
+// --- BASE DE DADOS (Firestore) ---
+
 async function inicializarApp() {
+    if (!docRef) return;
     try {
         const docSnap = await getDoc(docRef);
-        
         if (docSnap.exists()) {
-            // Se já tem dados na nuvem, joga pra nossa variável
             let dadosNuvem = docSnap.data();
             bancoDeDados = {
                 renda: dadosNuvem.renda || [],
@@ -45,25 +76,23 @@ async function inicializarApp() {
                 acordos: dadosNuvem.acordos || []
             };
         } else {
-            console.log("Nenhum dado encontrado na nuvem. Criando novo banco...");
-            await salvarDadosNuvem(); // Cria o documento vazio lá
+            // Conta nova, cria a base vazia
+            await salvarDadosNuvem(); 
         }
-        
-        carregarPaginaAtual(); // Só carrega a tela depois que baixar da nuvem
-        
+        carregarPaginaAtual();
     } catch (error) {
         console.error("Erro ao buscar dados do Firebase:", error);
-        alert("Erro ao conectar no banco de dados. Verifique a internet ou se o banco foi criado no Firebase.");
+        alert("Acesso negado. Confirme se atualizou as regras do Firestore para permitir acesso autenticado.");
     }
 }
 
-// 2. FUNÇÃO PARA SALVAR NA NUVEM
 async function salvarDadosNuvem() {
+    if (!docRef) return;
     try {
         await setDoc(docRef, bancoDeDados);
         carregarPaginaAtual();
     } catch (error) {
-        console.error("Erro ao salvar no Firebase:", error);
+        console.error("Erro ao salvar:", error);
         alert("Erro ao salvar os dados na nuvem.");
     }
 }
@@ -86,6 +115,7 @@ function formatarData(dataString) {
 }
 
 // --- FUNÇÕES DE RENDERIZAÇÃO ---
+// (Estas mantêm-se iguaizinhas, mas o sistema inteiro agora é seguro)
 
 function renderizarResumo() {
     let hoje = new Date().getDate(); 
@@ -140,6 +170,7 @@ function renderizarResumo() {
 
 function renderizarLista(categoria, idLista) {
     const lista = document.getElementById(idLista);
+    if(!lista) return;
     lista.innerHTML = '';
     bancoDeDados[categoria].forEach((item, index) => {
         lista.innerHTML += `
@@ -270,8 +301,6 @@ function renderizarAcordos() {
 }
 
 // --- AÇÕES COM SALVAMENTO NA NUVEM ---
-
-// As funções precisam estar atreladas ao 'window' para funcionarem com onclick no HTML usando type="module"
 window.darBaixaCartao = async function(index) {
     let compra = bancoDeDados.cartoes[index];
     if (compra.parcelasPagas < compra.qtdParcelas) {
@@ -394,6 +423,3 @@ if(formAcordos) {
         await salvarDadosNuvem();
     });
 }
-
-// INICIA O APP (BUSCA DO FIREBASE PRIMEIRO)
-inicializarApp();

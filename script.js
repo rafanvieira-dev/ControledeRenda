@@ -101,24 +101,16 @@ function carregarPaginaAtual() {
     }
 }
 
-function formatarData(dataString) {
-    if(!dataString) return "N/A";
-    let partes = dataString.split('-');
-    if(partes.length !== 3) return dataString;
-    return `${partes[2]}/${partes[1]}/${partes[0]}`; 
-}
-
 // --- FUNÇÕES DE RENDERIZAÇÃO ---
 function renderizarResumo() {
     let hoje = new Date().getDate(); 
     let totalRenda = bancoDeDados.renda.reduce((acc, item) => acc + (item.valor || 0), 0);
     let despesasPagas = 0; let despesasAVencer = 0; let dividaTotalLongoPrazo = 0; 
-    let previsaoProximoMes = 0; // NOVA VARIÁVEL AQUI
+    let previsaoProximoMes = 0;
 
     bancoDeDados.fixas.forEach(item => {
         let diaVenc = item.diaVencimento || 1;
         if (hoje >= diaVenc) despesasPagas += (item.valor || 0); else despesasAVencer += (item.valor || 0);
-        // Despesas fixas sempre acontecem no mês seguinte
         previsaoProximoMes += (item.valor || 0);
     });
 
@@ -128,11 +120,7 @@ function renderizarResumo() {
         if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
             dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
-            
-            // Se tem mais de 1 parcela restante, haverá cobrança no próximo mês
-            if (parcelasRestantes > 1) {
-                previsaoProximoMes += (item.valorParcela || 0);
-            }
+            if (parcelasRestantes > 1) previsaoProximoMes += (item.valorParcela || 0);
         }
     });
 
@@ -142,10 +130,7 @@ function renderizarResumo() {
         if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
             dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
-            
-            if (parcelasRestantes > 1) {
-                previsaoProximoMes += (item.valorParcela || 0);
-            }
+            if (parcelasRestantes > 1) previsaoProximoMes += (item.valorParcela || 0);
         }
     });
 
@@ -155,10 +140,7 @@ function renderizarResumo() {
         if (parcelasRestantes > 0) {
             if (hoje >= diaVenc) despesasPagas += (item.valorParcela || 0); else despesasAVencer += (item.valorParcela || 0);
             dividaTotalLongoPrazo += ((item.valorParcela || 0) * parcelasRestantes);
-            
-            if (parcelasRestantes > 1) {
-                previsaoProximoMes += (item.valorParcela || 0);
-            }
+            if (parcelasRestantes > 1) previsaoProximoMes += (item.valorParcela || 0);
         }
     });
 
@@ -168,11 +150,8 @@ function renderizarResumo() {
     document.getElementById('resumo-saldo').innerText = (totalRenda - despesasPagas - despesasAVencer).toFixed(2);
     document.getElementById('resumo-divida-total').innerText = dividaTotalLongoPrazo.toFixed(2);
     
-    // EXIBE A PREVISÃO NA TELA SE O ELEMENTO EXISTIR
     let campoProximoMes = document.getElementById('resumo-proximo-mes');
-    if (campoProximoMes) {
-        campoProximoMes.innerText = previsaoProximoMes.toFixed(2);
-    }
+    if (campoProximoMes) campoProximoMes.innerText = previsaoProximoMes.toFixed(2);
 }
 
 function renderizarLista(categoria, idLista) {
@@ -224,7 +203,25 @@ function renderizarCartoes() {
 
     for (let nomeCartao in cartoesAgrupados) {
         let dados = cartoesAgrupados[nomeCartao];
-        let htmlFatura = `<div class="fatura-cartao"><div class="fatura-cabecalho"><h3>💳 ${nomeCartao}</h3><div style="display: flex; justify-content: space-between;"><span>Fatura do Mês: <strong>R$ ${dados.totalMensal.toFixed(2)}</strong></span><span style="color: var(--danger);">Dívida Total: <strong>R$ ${dados.totalDevedor.toFixed(2)}</strong></span></div></div><ul style="border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 10px 10px; padding: 10px;">`;
+        
+        // NOVO: Adicionado botão de pagar fatura inteira do mês
+        let botaoPagarFatura = dados.totalMensal > 0 
+            ? `<button class="btn-baixa" style="background: var(--success);" onclick="pagarFaturaCartao('${nomeCartao}')">✓ Pagar Fatura do Mês</button>` 
+            : `<span style="color: var(--success); font-weight: bold;">Fatura Paga!</span>`;
+
+        let htmlFatura = `<div class="fatura-cartao">
+            <div class="fatura-cabecalho">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">💳 ${nomeCartao}</h3>
+                    ${botaoPagarFatura}
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Fatura do Mês: <strong>R$ ${dados.totalMensal.toFixed(2)}</strong></span>
+                    <span style="color: var(--danger);">Dívida Total: <strong>R$ ${dados.totalDevedor.toFixed(2)}</strong></span>
+                </div>
+            </div>
+            <ul style="border: 1px solid #E5E7EB; border-top: none; border-radius: 0 0 10px 10px; padding: 10px;">`;
+            
         dados.compras.forEach(compra => {
             let finalizado = compra.parcelasPagas >= compra.qtdParcelas;
             htmlFatura += `<li style="${finalizado ? 'opacity: 0.5; border-left-color: var(--success);' : ''}"><div><strong>${compra.descricao || ''}</strong> <small style="color:var(--text-muted);">(${compra.diaVencimento ? `Venc: dia ${compra.diaVencimento}` : 'N/A'})</small><br><small>Parcela: R$ ${(compra.valorParcela||0).toFixed(2)}</small><br><small>Progresso: ${compra.parcelasPagas||0}/${compra.qtdParcelas||0} pagas</small></div><div class="botoes-acao">${!finalizado ? `<button class="btn-baixa" onclick="darBaixaCartao(${compra.indexOriginal})">Pagar 1x</button>` : `<span style="color:var(--success); font-weight:bold; margin-right: 10px;">Quitada!</span>`}<button class="btn-del" onclick="deletar('cartoes', ${compra.indexOriginal})">X</button></div></li>`;
@@ -261,6 +258,22 @@ function renderizarAcordos() {
 window.darBaixaCartao = async function(index) {
     bancoDeDados.cartoes[index].parcelasPagas += 1; await salvarDadosNuvem(false);
 }
+
+// NOVO: Função para pagar a fatura inteira do mês do cartão
+window.pagarFaturaCartao = async function(nomeCartao) {
+    if(confirm(`Deseja pagar a fatura do mês do cartão ${nomeCartao}? Isso vai dar baixa em 1 parcela de TODAS as compras ativas deste cartão.`)) {
+        let alterou = false;
+        bancoDeDados.cartoes.forEach(compra => {
+            let nome = (compra.cartao || 'Desconhecido').toUpperCase();
+            if (nome === nomeCartao && compra.parcelasPagas < compra.qtdParcelas) {
+                compra.parcelasPagas += 1;
+                alterou = true;
+            }
+        });
+        if(alterou) await salvarDadosNuvem(false);
+    }
+}
+
 window.darBaixaEmprestimo = async function(index) {
     bancoDeDados.emprestimos[index].qtdPagas += 1; await salvarDadosNuvem(false);
 }

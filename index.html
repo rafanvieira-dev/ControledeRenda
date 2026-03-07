@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,30 +7,47 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Minhas Finanças</h1>
-        <nav class="menu">
-            <a href="index.html" class="ativo">Saldo</a>
-            <a href="renda.html">Renda</a>
-            <a href="fixas.html">Fixas</a>
-            <a href="cartoes.html">Cartões</a>
-            <a href="emprestimos.html">Empréstimos</a>
-            <a href="acordos.html">Acordos</a>
-        </nav>
 
-        <h2>Resumo do Mês</h2>
-        <div class="painel">
-            <div class="card receitas">Renda<br>R$ <span id="resumo-receitas">0.00</span></div>
-            <div class="card despesas">Já Venceu<br>R$ <span id="resumo-despesas">0.00</span></div>
-            <div class="card alerta">A Vencer<br>R$ <span id="resumo-avencer">0.00</span></div>
-            <div class="card saldo">Saldo<br>R$ <span id="resumo-saldo">0.00</span></div>
-        </div>
-        
-        <h2 style="margin-top: 20px; color: #dc3545;">Visão Geral de Dívidas</h2>
-        <div class="painel">
-            <div class="card despesas" style="width: 100%;">Total Devedor (Longo Prazo)<br>R$ <span id="resumo-divida-total">0.00</span></div>
+    <div id="login-section" class="container" style="text-align: center; margin-top: 50px;">
+        <h1>Controle de Renda</h1>
+        <p>Faça login para aceder às suas finanças.</p>
+        <button onclick="loginComGoogle()" style="background-color: #4285F4; margin-top: 20px;">Fazer Login com o Google</button>
+    </div>
+
+    <div id="app-container" style="display: none;">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>Minhas Finanças</h1>
+                <div>
+                    <span id="user-name" style="font-weight: bold; margin-right: 10px; color: #555;"></span>
+                    <button onclick="sair()" style="background-color: #dc3545; padding: 5px 10px;">Sair</button>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="index.html" class="ativo">Saldo</a>
+                <a href="renda.html">Renda</a>
+                <a href="fixas.html">Fixas</a>
+                <a href="cartoes.html">Cartões</a>
+                <a href="emprestimos.html">Empréstimos</a>
+                <a href="acordos.html">Acordos</a>
+            </nav>
+
+            <h2>Resumo do Mês</h2>
+            <div class="painel">
+                <div class="card receitas">Renda<br>R$ <span id="resumo-receitas">0.00</span></div>
+                <div class="card despesas">Já Venceu<br>R$ <span id="resumo-despesas">0.00</span></div>
+                <div class="card alerta">A Vencer<br>R$ <span id="resumo-avencer">0.00</span></div>
+                <div class="card saldo">Saldo<br>R$ <span id="resumo-saldo">0.00</span></div>
+            </div>
+            
+            <h2 style="margin-top: 20px; color: #dc3545;">Visão Geral de Dívidas</h2>
+            <div class="painel">
+                <div class="card despesas" style="width: 100%;">Total Devedor (Longo Prazo)<br>R$ <span id="resumo-divida-total">0.00</span></div>
+            </div>
         </div>
     </div>
+
     <script type="module" src="script.js"></script>
 </body>
 </html>

@@ -7,43 +7,37 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Minhas Finanças</h1>
-        
-        <nav class="menu">
-            <a href="index.html">Saldo</a>
-            <a href="renda.html">Renda</a>
-            <a href="fixas.html">Fixas</a>
-            <a href="cartoes.html">Cartões</a>
-            <a href="emprestimos.html" class="ativo">Empréstimos</a>
-            <a href="acordos.html">Acordos</a>
-        </nav>
+    <div id="loading-section" class="loader-container"><div class="spinner"></div><h2 style="border:none;">Carregando...</h2></div>
+    <div id="login-section" class="box-branca login-box" style="display: none;"><button class="btn-google" onclick="loginComGoogle()">Fazer Login</button></div>
 
-        <h2>Meus Empréstimos e Financiamentos</h2>
-        
-        <form id="form-emprestimos">
-            <input type="text" id="desc" placeholder="Ex: Financiamento do Carro" required>
-            <input type="number" id="valor-total" placeholder="Valor Total do Empréstimo (R$)" step="0.01" required>
-            <input type="number" id="valor-parcela" placeholder="Valor da Parcela (R$)" step="0.01" required>
-            
-            <label for="qtd-total">Total de Parcelas do Empréstimo:</label>
-            <select id="qtd-total" required></select>
+    <div id="app-container" style="display: none;">
+        <div class="container box-branca">
+            <h1>Minhas Finanças</h1>
+            <nav class="menu">
+                <a href="index.html">Dashboard</a><a href="renda.html">Renda</a><a href="fixas.html">Fixas</a>
+                <a href="cartoes.html">Cartões</a><a href="emprestimos.html" class="ativo">Empréstimos</a><a href="acordos.html">Acordos</a>
+            </nav>
 
-            <label for="qtd-pagas">Quantas já foram pagas?</label>
-            <select id="qtd-pagas" required></select>
-
-            <label for="data-inicio">Mês da 1ª Parcela:</label>
-            <input type="date" id="data-inicio" required>
-
-            <label for="dia-vencimento">Dia do Vencimento (Todo mês):</label>
-            <input type="number" id="dia-vencimento" min="1" max="31" placeholder="Ex: 10" required>
-
-            <button type="submit">Adicionar Empréstimo</button>
-        </form>
-
-        <ul id="lista-emprestimos"></ul>
+            <div class="grid-layout">
+                <div>
+                    <h2>Lançar Financiamento</h2>
+                    <form id="form-emprestimos">
+                        <label>Descrição</label><input type="text" id="desc" placeholder="Ex: Financiamento Casa" required>
+                        <label>Valor Total do Empréstimo (R$)</label><input type="number" id="valor-total" placeholder="0.00" step="0.01" required>
+                        <label>Valor da Parcela Mensal (R$)</label><input type="number" id="valor-parcela" placeholder="0.00" step="0.01" required>
+                        <label>Total de Parcelas Contratadas</label><select id="qtd-total" required></select>
+                        <label>Quantas parcelas já pagou?</label><select id="qtd-pagas" required></select>
+                        <label>Dia do Vencimento Mensal</label><input type="number" id="dia-vencimento" min="1" max="31" placeholder="Ex: 10" required>
+                        <button type="submit">Adicionar Financiamento</button>
+                    </form>
+                </div>
+                <div>
+                    <h2>Empréstimos e Financiamentos</h2>
+                    <ul id="lista-emprestimos"></ul>
+                </div>
+            </div>
+        </div>
     </div>
-
     <script type="module" src="script.js"></script>
 </body>
 </html>

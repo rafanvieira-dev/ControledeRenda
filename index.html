@@ -15,13 +15,20 @@
             <a href="fixas.html">Fixas</a>
             <a href="cartoes.html">Cartões</a>
             <a href="emprestimos.html">Empréstimos</a>
+            <a href="acordos.html">Acordos</a>
         </nav>
 
         <h2>Resumo do Mês</h2>
         <div class="painel">
             <div class="card receitas">Renda<br>R$ <span id="resumo-receitas">0.00</span></div>
-            <div class="card despesas">Gastos<br>R$ <span id="resumo-despesas">0.00</span></div>
-            <div class="card saldo">Saldo<br>R$ <span id="resumo-saldo">0.00</span></div>
+            <div class="card despesas">Já Venceu/Pago<br>R$ <span id="resumo-despesas">0.00</span></div>
+            <div class="card alerta">A Vencer<br>R$ <span id="resumo-avencer">0.00</span></div>
+            <div class="card saldo">Saldo Atual<br>R$ <span id="resumo-saldo">0.00</span></div>
+        </div>
+        
+        <h2 style="margin-top: 20px; color: #dc3545;">Visão Geral de Dívidas</h2>
+        <div class="painel">
+            <div class="card despesas" style="width: 100%;">Total Devedor (Longo Prazo)<br>R$ <span id="resumo-divida-total">0.00</span></div>
         </div>
     </div>
     <script src="script.js"></script>
